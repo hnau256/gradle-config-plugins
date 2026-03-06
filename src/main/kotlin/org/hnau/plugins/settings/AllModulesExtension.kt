@@ -8,4 +8,5 @@ class AllModulesExtension {
     var group: String? = null
     var version: String? = null
     var includeHnauCommons: Boolean = true
+    var gitUrl: String? = null
 }

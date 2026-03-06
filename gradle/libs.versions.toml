@@ -7,11 +7,19 @@ agp = "9.1.0"
 jvm = "17"
 vanniktech = "0.36.0"
 dokka = "2.1.0"
+# Bump this together with `Versions.ksp` in Versions.kt
+ksp = "2.3.6"
+# Bump this together with `Versions.composeMultiplatform` in Versions.kt
+compose = "1.10.2"
 
 [libraries]
 agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 agp-api = { module = "com.android.tools.build:gradle-api", version.ref = "agp" }
 kgp = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+kgp-serialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "kotlin" }
+kgp-compose = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
+ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
+compose = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "compose" }
 vanniktech = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "vanniktech" }
 dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
 

@@ -5,8 +5,10 @@ import org.gradle.api.initialization.Settings
 import org.gradle.api.initialization.resolve.MutableVersionCatalogContainer
 import org.hnau.plugins.Versions
 import org.hnau.plugins.Versions.Arrow
+import org.hnau.plugins.Versions.Compose
 import org.hnau.plugins.Versions.HnauCommons
 import org.hnau.plugins.Versions.Kotlinx
+import org.hnau.plugins.Versions.PluginIds
 import java.io.File
 
 class HnauSettingsPlugin : Plugin<Settings> {
@@ -24,6 +26,17 @@ class HnauSettingsPlugin : Plugin<Settings> {
                 repos.google()
                 repos.mavenCentral()
                 repos.mavenLocal()
+            }
+            spec.plugins { plugins ->
+                plugins.id(PluginIds.kotlinMultiplatform).version(Versions.kotlin)
+                plugins.id(PluginIds.kotlinJvm).version(Versions.kotlin)
+                plugins.id(PluginIds.kotlinSerialization).version(Versions.kotlin)
+                plugins.id(PluginIds.kotlinCompose).version(Versions.kotlin)
+                plugins.id(PluginIds.androidKmpLibrary).version(Versions.agp)
+                plugins.id(PluginIds.androidLibrary).version(Versions.agp)
+                plugins.id(PluginIds.ksp).version(Versions.ksp)
+                plugins.id(PluginIds.composeMultiplatform).version(Versions.composeMultiplatform)
+                plugins.id(PluginIds.dokka).version(Versions.dokka)
             }
         }
 
@@ -48,10 +61,10 @@ class HnauSettingsPlugin : Plugin<Settings> {
         // Propagate allModules defaults to every project.
         settings.gradle.beforeProject { project ->
             val allModules = extension.allModules
-            allModules.group?.let { project.group = it }
+            allModules.group?.let { project.extensions.extraProperties["hnau.group"] = it }
             allModules.version?.let { project.version = it }
-            project.extensions.extraProperties["hnau.includeHnauCommons"] =
-                allModules.includeHnauCommons
+            project.extensions.extraProperties["hnau.includeHnauCommons"] = allModules.includeHnauCommons
+            allModules.gitUrl?.let { project.extensions.extraProperties["hnau.gitUrl"] = it }
         }
     }
 
@@ -83,34 +96,34 @@ class HnauSettingsPlugin : Plugin<Settings> {
     }
 
     private fun buildHnauCatalog(catalogs: MutableVersionCatalogContainer) {
-        catalogs.create("hnau") { catalog ->
+        catalogs.create("hnauLibs") { catalog ->
             // ── Plugins ────────────────────────────────────────────────────────
             catalog
-                .plugin("kotlin-multiplatform", "org.jetbrains.kotlin.multiplatform")
+                .plugin("kotlin-multiplatform", PluginIds.kotlinMultiplatform)
                 .version(Versions.kotlin)
             catalog
-                .plugin("kotlin-jvm", "org.jetbrains.kotlin.jvm")
+                .plugin("kotlin-jvm", PluginIds.kotlinJvm)
                 .version(Versions.kotlin)
             catalog
-                .plugin("kotlin-serialization", "org.jetbrains.kotlin.plugin.serialization")
+                .plugin("kotlin-serialization", PluginIds.kotlinSerialization)
                 .version(Versions.kotlin)
             catalog
-                .plugin("android-library", "com.android.library")
+                .plugin("android-library", PluginIds.androidLibrary)
                 .version(Versions.agp)
             catalog
-                .plugin("ksp", "com.google.devtools.ksp")
+                .plugin("ksp", PluginIds.ksp)
                 .version(Versions.ksp)
             catalog
-                .plugin("compose-multiplatform", "org.jetbrains.compose")
+                .plugin("compose-multiplatform", PluginIds.composeMultiplatform)
                 .version(Versions.composeMultiplatform)
             catalog
-                .plugin("compose-compiler", "org.jetbrains.kotlin.plugin.compose")
+                .plugin("compose-compiler", PluginIds.kotlinCompose)
                 .version(Versions.kotlin)
             catalog
-                .plugin("vanniktech", "com.vanniktech.maven.publish")
+                .plugin("vanniktech", PluginIds.vanniktech)
                 .version(Versions.vanniktech)
             catalog
-                .plugin("dokka", "org.jetbrains.dokka")
+                .plugin("dokka", PluginIds.dokka)
                 .version(Versions.dokka)
 
             // ── hnau.commons ───────────────────────────────────────────────────
@@ -135,24 +148,24 @@ class HnauSettingsPlugin : Plugin<Settings> {
 
             // ── kotlinx ────────────────────────────────────────────────────────
             catalog
-                .library("kotlinx-serialization-core", "org.jetbrains.kotlinx", "kotlinx-serialization-core")
+                .library("kotlinx-serialization-core", Kotlinx.group, Kotlinx.serializationCoreArtifact)
                 .version(Kotlinx.serializationVersion)
             catalog
-                .library("kotlinx-serialization-json", "org.jetbrains.kotlinx", "kotlinx-serialization-json")
+                .library("kotlinx-serialization-json", Kotlinx.group, Kotlinx.serializationJsonArtifact)
                 .version(Kotlinx.serializationVersion)
 
             // ── Arrow ──────────────────────────────────────────────────────────
-            catalog.library("arrow-core", "io.arrow-kt", "arrow-core").version(Arrow.version)
-            catalog.library("arrow-optics", "io.arrow-kt", "arrow-optics").version(Arrow.version)
-            catalog.library("arrow-optics-ksp-plugin", "io.arrow-kt", "arrow-optics-ksp-plugin").version(Arrow.version)
+            catalog.library("arrow-core", Arrow.group, Arrow.coreArtifact).version(Arrow.version)
+            catalog.library("arrow-optics", Arrow.group, Arrow.opticsArtifact).version(Arrow.version)
+            catalog.library("arrow-optics-ksp-plugin", Arrow.group, Arrow.opticsKspPluginArtifact).version(Arrow.version)
 
             // ── Compose ────────────────────────────────────────────────────────
             val composeVersion = catalog.version("compose-multiplatform", Versions.composeMultiplatform)
-            catalog.library("compose-runtime", "org.jetbrains.compose.runtime", "runtime").versionRef(composeVersion)
-            catalog.library("compose-foundation", "org.jetbrains.compose.foundation", "foundation").versionRef(composeVersion)
-            catalog.library("compose-ui", "org.jetbrains.compose.ui", "ui").versionRef(composeVersion)
-            catalog.library("compose-material3", "org.jetbrains.compose.material3", "material3").version("1.10.0-alpha05")
-            catalog.library("compose-icons-core", "org.jetbrains.compose.material", "material-icons-core").version("1.7.3")
+            catalog.library("compose-runtime", Compose.runtimeGroup, Compose.runtimeArtifact).versionRef(composeVersion)
+            catalog.library("compose-foundation", Compose.foundationGroup, Compose.foundationArtifact).versionRef(composeVersion)
+            catalog.library("compose-ui", Compose.uiGroup, Compose.uiArtifact).versionRef(composeVersion)
+            catalog.library("compose-material3", Compose.material3Group, Compose.material3Artifact).version(Compose.material3Version)
+            catalog.library("compose-icons-core", Compose.iconsCoreGroup, Compose.iconsCoreArtifact).version(Compose.iconsCoreVersion)
         }
     }
 }

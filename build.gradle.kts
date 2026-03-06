@@ -18,11 +18,15 @@ repositories {
 dependencies {
     compileOnly(gradleApi())
     compileOnly(gradleKotlinDsl())
-    compileOnly(libs.agp)
-    compileOnly(libs.agp.api)
-    compileOnly(libs.kgp)
-    compileOnly(libs.vanniktech)
-    compileOnly(libs.dokka)
+    implementation(libs.kgp)
+    implementation(libs.kgp.serialization)
+    implementation(libs.kgp.compose)
+    implementation(libs.agp)
+    implementation(libs.agp.api)
+    implementation(libs.ksp)
+    implementation(libs.compose)
+    implementation(libs.vanniktech)
+    implementation(libs.dokka)
 }
 
 val jvmVersion =
