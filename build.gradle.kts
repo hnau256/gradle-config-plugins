@@ -48,8 +48,10 @@ kotlin {
     }
 }
 
+val versionString = "1.0.0"
+
 group = "org.hnau.plugins"
-version = "0.1.0"
+version = versionString
 
 gradlePlugin {
     plugins {
@@ -83,7 +85,7 @@ extensions.configure<MavenPublishBaseExtension> {
     coordinates(
         groupId = "org.hnau.plugins",
         artifactId = "plugins",
-        version = "0.1.0",
+        version = versionString,
     )
 
     pom {
