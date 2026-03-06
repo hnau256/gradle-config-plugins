@@ -1,0 +1,21 @@
+[versions]
+# Bump this together with `Versions.kotlin` in Versions.kt
+kotlin = "2.3.10"
+# Bump this together with `Versions.agp` in Versions.kt
+agp = "9.1.0"
+# Bump this together with `Versions.jvmTargetInt` in Versions.kt
+jvm = "17"
+vanniktech = "0.36.0"
+dokka = "2.1.0"
+
+[libraries]
+agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+agp-api = { module = "com.android.tools.build:gradle-api", version.ref = "agp" }
+kgp = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+vanniktech = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "vanniktech" }
+dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+vanniktech = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
