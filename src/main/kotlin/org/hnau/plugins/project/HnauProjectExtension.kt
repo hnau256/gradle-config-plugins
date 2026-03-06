@@ -12,6 +12,7 @@ import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.getByType
 import org.hnau.plugins.ConfigurationNames
@@ -314,13 +315,16 @@ open class HnauProjectExtension(
                 project.layout.buildDirectory.dir("generated/ksp/metadata/commonMain/kotlin"),
             )
 
-            project.tasks
-                .withType(KotlinCompilationTask::class.java)
-                .configureEach { task ->
+            project.tasks.configureEach { task ->
+                if (task is KotlinCompilationTask<*> ||
+                    task is org.gradle.api.tasks.bundling.Jar ||
+                    task.name.contains("sourcesJar", ignoreCase = true)
+                ) {
                     if (task.name != TaskNames.kspCommonMainKotlinMetadata) {
                         task.dependsOn(TaskNames.kspCommonMainKotlinMetadata)
                     }
                 }
+            }
 
             project.tasks
                 .matching { task -> task.name.startsWith("ksp") && task.name != TaskNames.kspCommonMainKotlinMetadata }

@@ -22,8 +22,8 @@ class HnauProjectPlugin : Plugin<Project> {
             .withType(KotlinCompilationTask::class.java)
             .configureEach { task ->
                 task.compilerOptions {
-                    freeCompilerArgs.add("-Xjsr305=strict")
                     if (this is KotlinJvmCompilerOptions) {
+                        freeCompilerArgs.add("-Xjsr305=strict")
                         jvmTarget.set(Versions.jvmTarget)
                     }
                 }
