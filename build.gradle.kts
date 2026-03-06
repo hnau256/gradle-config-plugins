@@ -70,7 +70,7 @@ gradlePlugin {
     }
 }
 
-val gitUrl = "https://github.com/hnau256/plugins"
+val gitUrl = "https://github.com/hnau256/gradle-config-plugins"
 
 extensions.configure<MavenPublishBaseExtension> {
     publishToMavenCentral()
