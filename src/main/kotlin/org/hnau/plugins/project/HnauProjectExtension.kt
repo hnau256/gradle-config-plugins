@@ -1,18 +1,13 @@
 package org.hnau.plugins.project
 
 import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryExtension
-import com.vanniktech.maven.publish.JavadocJar
-import com.vanniktech.maven.publish.KotlinJvm
-import com.vanniktech.maven.publish.KotlinMultiplatform
-import com.vanniktech.maven.publish.MavenPublishBaseExtension
-import com.vanniktech.maven.publish.SourcesJar
+import com.vanniktech.maven.publish.*
 import org.gradle.api.Action
 import org.gradle.api.GradleException
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.plugins.JavaPluginExtension
-import org.gradle.api.tasks.bundling.Jar
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.getByType
 import org.hnau.plugins.ConfigurationNames
@@ -119,7 +114,7 @@ open class HnauProjectExtension(
                 ?: throw GradleException(
                     "allModules.group is required. Set it via allModules { group = \"com.example\" } in settings.",
                 )
-        val namespace = "$group.$artifactId"
+        val namespace = "$group.${artifactId.replace('-', '.')}"
 
         val kotlinExtension = project.extensions.getByType<KotlinMultiplatformExtension>()
 

@@ -48,7 +48,7 @@ kotlin {
     }
 }
 
-val versionString = "1.0.0"
+val versionString = "1.0.1"
 
 group = "org.hnau.plugins"
 version = versionString
