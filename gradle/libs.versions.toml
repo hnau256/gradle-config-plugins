@@ -20,6 +20,7 @@ kgp-serialization = { module = "org.jetbrains.kotlin:kotlin-serialization", vers
 kgp-compose = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
 ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
 compose = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "compose" }
+google-services = { module = "com.google.gms:google-services", version = "4.4.2" }
 vanniktech = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "vanniktech" }
 dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
 

@@ -25,6 +25,7 @@ dependencies {
     implementation(libs.agp.api)
     implementation(libs.ksp)
     implementation(libs.compose)
+    implementation(libs.google.services)
     implementation(libs.vanniktech)
     implementation(libs.dokka)
 }
@@ -48,7 +49,7 @@ kotlin {
     }
 }
 
-val versionString = "1.0.1"
+val versionString = "1.1.0"
 
 group = "org.hnau.plugins"
 version = versionString
@@ -61,11 +62,29 @@ gradlePlugin {
             displayName = "Hnau Settings Plugin"
             description = "Centralized settings: version catalog, pluginManagement, auto-include modules, allModules defaults"
         }
-        create("hnauProject") {
-            id = "org.hnau.project"
-            implementationClass = "org.hnau.plugins.project.HnauProjectPlugin"
-            displayName = "Hnau Project Plugin"
-            description = "Module configuration: JVM/KMP setup, KSP processors, serialization, publishing"
+        create("hnauJvm") {
+            id = "org.hnau.jvm"
+            implementationClass = "org.hnau.plugins.project.entrypoints.HnauJvmPlugin"
+            displayName = "Hnau JVM Plugin"
+            description = "Kotlin JVM module configuration with auto-detection"
+        }
+        create("hnauKmp") {
+            id = "org.hnau.kmp"
+            implementationClass = "org.hnau.plugins.project.entrypoints.HnauKmpPlugin"
+            displayName = "Hnau KMP Plugin"
+            description = "Kotlin Multiplatform module configuration with auto-detection"
+        }
+        create("hnauUi") {
+            id = "org.hnau.ui"
+            implementationClass = "org.hnau.plugins.project.entrypoints.HnauUiPlugin"
+            displayName = "Hnau UI Plugin"
+            description = "Compose Multiplatform module configuration with auto-detection"
+        }
+        create("hnauAndroidApp") {
+            id = "org.hnau.androidapp"
+            implementationClass = "org.hnau.plugins.project.entrypoints.HnauAndroidAppPlugin"
+            displayName = "Hnau Android App Plugin"
+            description = "Android Application module configuration with auto-detection"
         }
     }
 }

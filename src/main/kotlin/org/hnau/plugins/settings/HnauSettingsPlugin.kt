@@ -4,42 +4,24 @@ import org.gradle.api.Plugin
 import org.gradle.api.initialization.Settings
 import org.gradle.api.initialization.resolve.MutableVersionCatalogContainer
 import org.hnau.plugins.Versions
-import org.hnau.plugins.Versions.Arrow
-import org.hnau.plugins.Versions.Compose
 import org.hnau.plugins.Versions.HnauCommons
 import org.hnau.plugins.Versions.Kotlinx
-import org.hnau.plugins.Versions.PluginIds
-import java.io.File
 
+/**
+ * Settings plugin that:
+ * 1. Creates hnau.versions.toml BOM catalog with plugins and libraries
+ * 2. Stores configuration in rootProject.extensions for module plugins to access
+ */
 class HnauSettingsPlugin : Plugin<Settings> {
     override fun apply(settings: Settings) {
         val extension =
             settings.extensions.create(
-                "hnauSettings",
+                "hnau",
                 HnauSettingsExtension::class.java,
                 settings,
             )
 
-        settings.pluginManagement { spec ->
-            spec.repositories { repos ->
-                repos.gradlePluginPortal()
-                repos.google()
-                repos.mavenCentral()
-                repos.mavenLocal()
-            }
-            spec.plugins { plugins ->
-                plugins.id(PluginIds.kotlinMultiplatform).version(Versions.kotlin)
-                plugins.id(PluginIds.kotlinJvm).version(Versions.kotlin)
-                plugins.id(PluginIds.kotlinSerialization).version(Versions.kotlin)
-                plugins.id(PluginIds.kotlinCompose).version(Versions.kotlin)
-                plugins.id(PluginIds.androidKmpLibrary).version(Versions.agp)
-                plugins.id(PluginIds.androidLibrary).version(Versions.agp)
-                plugins.id(PluginIds.ksp).version(Versions.ksp)
-                plugins.id(PluginIds.composeMultiplatform).version(Versions.composeMultiplatform)
-                plugins.id(PluginIds.dokka).version(Versions.dokka)
-            }
-        }
-
+        // Configure repositories and create catalog
         settings.dependencyResolutionManagement { management ->
             management.repositories { repos ->
                 repos.google()
@@ -47,125 +29,58 @@ class HnauSettingsPlugin : Plugin<Settings> {
                 repos.mavenLocal()
             }
             management.versionCatalogs { catalogs ->
-                buildHnauCatalog(catalogs)
+                createBomCatalog(catalogs)
             }
         }
 
-        // Auto-include modules after settings are evaluated (extension block executed).
-        settings.gradle.settingsEvaluated {
-            if (extension.autoIncludeModules) {
-                autoIncludeModules(settings)
-            }
-        }
-
-        // Propagate allModules defaults to every project.
+        // Propagate settings to all projects via beforeProject hook
         settings.gradle.beforeProject { project ->
-            val allModules = extension.allModules
-            allModules.group?.let { project.extensions.extraProperties["hnau.group"] = it }
-            allModules.version?.let { project.version = it }
-            project.extensions.extraProperties["hnau.includeHnauCommons"] = allModules.includeHnauCommons
-            allModules.gitUrl?.let { project.extensions.extraProperties["hnau.gitUrl"] = it }
+            project.extensions.extraProperties["hnau.includeCommonsKotlinDependency"] = extension.includeCommonsKotlinDependency
+            extension.publishSettings?.let {
+                project.extensions.extraProperties["hnau.publish.groupId"] = it.groupId
+                project.extensions.extraProperties["hnau.publish.gitUrl"] = it.gitUrl
+                it.artifactId?.let { artifactId -> project.extensions.extraProperties["hnau.publish.artifactId"] = artifactId }
+                it.version?.let { version -> project.extensions.extraProperties["hnau.publish.version"] = version }
+                it.description?.let { desc -> project.extensions.extraProperties["hnau.publish.description"] = desc }
+                it.developerName?.let { name -> project.extensions.extraProperties["hnau.publish.developerName"] = name }
+                it.developerEmail?.let { email -> project.extensions.extraProperties["hnau.publish.developerEmail"] = email }
+                it.licenseName?.let { license -> project.extensions.extraProperties["hnau.publish.licenseName"] = license }
+                it.licenseUrl?.let { url -> project.extensions.extraProperties["hnau.publish.licenseUrl"] = url }
+            }
         }
     }
 
-    private fun autoIncludeModules(settings: Settings) {
-        findAndIncludeModules(settings, settings.rootDir)
-    }
+    private fun createBomCatalog(catalogs: MutableVersionCatalogContainer) {
+        catalogs.create("hnau") { catalog ->
+            // ── Versions ───────────────────────────────────────────────────────
+            val kotlinVersion = catalog.version("kotlin", Versions.kotlin)
+            val agpVersion = catalog.version("agp", Versions.agp)
+            val kspVersion = catalog.version("ksp", Versions.ksp)
+            val composeVersion = catalog.version("compose", Versions.composeMultiplatform)
+            val hnauCommonsVersion = catalog.version("hnau-commons", HnauCommons.version)
 
-    private fun findAndIncludeModules(
-        settings: Settings,
-        dir: File,
-        pathPrefix: String = "",
-    ) {
-        dir
-            .listFiles { file ->
-                file.isDirectory &&
-                    !file.name.startsWith(".") &&
-                    file.name !in setOf("build", "gradle", "buildSrc")
-            }?.forEach { file ->
-                val currentPath =
-                    listOfNotNull(
-                        pathPrefix.takeIf { it.isNotEmpty() },
-                        file.name,
-                    ).joinToString(separator = ":")
-                when {
-                    file.resolve("build.gradle.kts").exists() -> settings.include(":$currentPath")
-                    else -> findAndIncludeModules(settings, file, currentPath)
-                }
-            }
-    }
-
-    private fun buildHnauCatalog(catalogs: MutableVersionCatalogContainer) {
-        catalogs.create("hnauLibs") { catalog ->
             // ── Plugins ────────────────────────────────────────────────────────
-            catalog
-                .plugin("kotlin-multiplatform", PluginIds.kotlinMultiplatform)
-                .version(Versions.kotlin)
-            catalog
-                .plugin("kotlin-jvm", PluginIds.kotlinJvm)
-                .version(Versions.kotlin)
-            catalog
-                .plugin("kotlin-serialization", PluginIds.kotlinSerialization)
-                .version(Versions.kotlin)
-            catalog
-                .plugin("android-library", PluginIds.androidLibrary)
-                .version(Versions.agp)
-            catalog
-                .plugin("ksp", PluginIds.ksp)
-                .version(Versions.ksp)
-            catalog
-                .plugin("compose-multiplatform", PluginIds.composeMultiplatform)
-                .version(Versions.composeMultiplatform)
-            catalog
-                .plugin("compose-compiler", PluginIds.kotlinCompose)
-                .version(Versions.kotlin)
-            catalog
-                .plugin("vanniktech", PluginIds.vanniktech)
-                .version(Versions.vanniktech)
-            catalog
-                .plugin("dokka", PluginIds.dokka)
-                .version(Versions.dokka)
+            catalog.plugin("kotlin-jvm", Versions.PluginIds.kotlinJvm).versionRef(kotlinVersion)
+            catalog.plugin("kotlin-multiplatform", Versions.PluginIds.kotlinMultiplatform).versionRef(kotlinVersion)
+            catalog.plugin("kotlin-android", Versions.PluginIds.kotlinAndroid).versionRef(kotlinVersion)
+            catalog.plugin("kotlin-serialization", Versions.PluginIds.kotlinSerialization).versionRef(kotlinVersion)
+            catalog.plugin("kotlin-compose", Versions.PluginIds.kotlinCompose).versionRef(kotlinVersion)
+            catalog.plugin("android-library", Versions.PluginIds.androidLibrary).versionRef(agpVersion)
+            catalog.plugin("android-application", Versions.PluginIds.androidApplication).versionRef(agpVersion)
+            catalog.plugin("compose-multiplatform", Versions.PluginIds.composeMultiplatform).versionRef(composeVersion)
+            catalog.plugin("ksp", Versions.PluginIds.ksp).versionRef(kspVersion)
+            catalog.plugin("vanniktech", Versions.PluginIds.vanniktech).version(Versions.vanniktech)
+            catalog.plugin("dokka", Versions.PluginIds.dokka).version(Versions.dokka)
 
-            // ── hnau.commons ───────────────────────────────────────────────────
-            val hnauVersion = catalog.version("hnau-commons", HnauCommons.version)
-
-            fun hnauLib(
-                alias: String,
-                artifact: String,
-            ) = catalog.library(alias, HnauCommons.group, artifact).versionRef(hnauVersion)
-
-            hnauLib("hnau-commons-kotlin", HnauCommons.kotlin)
-            hnauLib("hnau-commons-app-model", HnauCommons.appModel)
-            hnauLib("hnau-commons-app-projector", HnauCommons.appProjector)
-            hnauLib("hnau-commons-gen-pipe-annotations", HnauCommons.Gen.pipeAnnotations)
-            hnauLib("hnau-commons-gen-pipe-processor", HnauCommons.Gen.pipeProcessor)
-            hnauLib("hnau-commons-gen-sealup-annotations", HnauCommons.Gen.sealUpAnnotations)
-            hnauLib("hnau-commons-gen-sealup-processor", HnauCommons.Gen.sealUpProcessor)
-            hnauLib("hnau-commons-gen-enumvalues-annotations", HnauCommons.Gen.enumValuesAnnotations)
-            hnauLib("hnau-commons-gen-enumvalues-processor", HnauCommons.Gen.enumValuesProcessor)
-            hnauLib("hnau-commons-gen-loggable-annotations", HnauCommons.Gen.loggableAnnotations)
-            hnauLib("hnau-commons-gen-loggable-processor", HnauCommons.Gen.loggableProcessor)
-
-            // ── kotlinx ────────────────────────────────────────────────────────
+            // ── Libraries ──────────────────────────────────────────────────────
+            catalog.library("commons-app-model", HnauCommons.group, HnauCommons.appModel).versionRef(hnauCommonsVersion)
+            catalog.library("commons-app-projector", HnauCommons.group, HnauCommons.appProjector).versionRef(hnauCommonsVersion)
             catalog
-                .library("kotlinx-serialization-core", Kotlinx.group, Kotlinx.serializationCoreArtifact)
-                .version(Kotlinx.serializationVersion)
-            catalog
-                .library("kotlinx-serialization-json", Kotlinx.group, Kotlinx.serializationJsonArtifact)
-                .version(Kotlinx.serializationVersion)
-
-            // ── Arrow ──────────────────────────────────────────────────────────
-            catalog.library("arrow-core", Arrow.group, Arrow.coreArtifact).version(Arrow.version)
-            catalog.library("arrow-optics", Arrow.group, Arrow.opticsArtifact).version(Arrow.version)
-            catalog.library("arrow-optics-ksp-plugin", Arrow.group, Arrow.opticsKspPluginArtifact).version(Arrow.version)
-
-            // ── Compose ────────────────────────────────────────────────────────
-            val composeVersion = catalog.version("compose-multiplatform", Versions.composeMultiplatform)
-            catalog.library("compose-runtime", Compose.runtimeGroup, Compose.runtimeArtifact).versionRef(composeVersion)
-            catalog.library("compose-foundation", Compose.foundationGroup, Compose.foundationArtifact).versionRef(composeVersion)
-            catalog.library("compose-ui", Compose.uiGroup, Compose.uiArtifact).versionRef(composeVersion)
-            catalog.library("compose-material3", Compose.material3Group, Compose.material3Artifact).version(Compose.material3Version)
-            catalog.library("compose-icons-core", Compose.iconsCoreGroup, Compose.iconsCoreArtifact).version(Compose.iconsCoreVersion)
+                .library(
+                    "kotlinx-serialization-json",
+                    Kotlinx.group,
+                    Kotlinx.serializationJsonArtifact,
+                ).version(Kotlinx.serializationVersion)
         }
     }
 }

@@ -15,6 +15,10 @@ internal object Versions {
     const val ksp = "2.3.6"
     const val composeMultiplatform = "1.10.2"
 
+    // Jetpack Compose
+    const val jetpackComposeVersion = "1.7.6"
+    const val composeCompilerVersion = "2.3.10" // Same as Kotlin version for Kotlin 2.x
+
     // Bump together with `vanniktech` in gradle/libs.versions.toml
     const val vanniktech = "0.36.0"
 
@@ -23,7 +27,7 @@ internal object Versions {
 
     // Android SDK
     const val compileSdk = 36
-    const val minSdk = 21
+    const val minSdk = 23
 
     // JVM bytecode — single declaration, used for toolchain and compilerOptions
     const val jvmTargetInt = 17
@@ -34,10 +38,13 @@ internal object Versions {
     object PluginIds {
         const val kotlinMultiplatform = "org.jetbrains.kotlin.multiplatform"
         const val kotlinJvm = "org.jetbrains.kotlin.jvm"
+        const val kotlinAndroid = "org.jetbrains.kotlin.android"
         const val kotlinSerialization = "org.jetbrains.kotlin.plugin.serialization"
         const val kotlinCompose = "org.jetbrains.kotlin.plugin.compose"
         const val androidKmpLibrary = "com.android.kotlin.multiplatform.library"
         const val androidLibrary = "com.android.library"
+        const val androidApplication = "com.android.application"
+        const val googleServices = "com.google.gms.google-services"
         const val ksp = "com.google.devtools.ksp"
         const val composeMultiplatform = "org.jetbrains.compose"
         const val dokka = "org.jetbrains.dokka"
@@ -49,7 +56,7 @@ internal object Versions {
 
     object HnauCommons {
         const val group = "org.hnau.commons"
-        const val version = "1.2.2"
+        const val version = "1.2.4"
 
         fun dep(artifact: String) = "$group:$artifact:$version"
 
@@ -58,14 +65,14 @@ internal object Versions {
         const val appProjector = "app-projector"
 
         object Gen {
-            const val pipeAnnotations = "gen.pipe.annotations"
-            const val pipeProcessor = "gen.pipe.processor"
-            const val sealUpAnnotations = "gen.sealup.annotations"
-            const val sealUpProcessor = "gen.sealup.processor"
-            const val enumValuesAnnotations = "gen.enumvalues.annotations"
-            const val enumValuesProcessor = "gen.enumvalues.processor"
-            const val loggableAnnotations = "gen.loggable.annotations"
-            const val loggableProcessor = "gen.loggable.processor"
+            const val pipeAnnotations = "gen-pipe-annotations"
+            const val pipeProcessor = "gen-pipe-processor"
+            const val sealUpAnnotations = "gen-sealup-annotations"
+            const val sealUpProcessor = "gen-sealup-processor"
+            const val enumValuesAnnotations = "gen-enumvalues-annotations"
+            const val enumValuesProcessor = "gen-enumvalues-processor"
+            const val loggableAnnotations = "gen-loggable-annotations"
+            const val loggableProcessor = "gen-loggable-processor"
         }
     }
 
@@ -104,6 +111,9 @@ internal object Versions {
         const val material3Artifact = "material3"
         const val iconsCoreGroup = "org.jetbrains.compose.material"
         const val iconsCoreArtifact = "material-icons-core"
+        const val iconsExtendedArtifact = "material-icons-extended"
+        const val componentsGroup = "org.jetbrains.compose.components"
+        const val resourcesArtifact = "components-resources"
 
         fun runtime() = "$runtimeGroup:$runtimeArtifact:$composeMultiplatform"
 
@@ -114,5 +124,27 @@ internal object Versions {
         fun material3() = "$material3Group:$material3Artifact:$material3Version"
 
         fun iconsCore() = "$iconsCoreGroup:$iconsCoreArtifact:$iconsCoreVersion"
+
+        fun iconsExtended() = "$iconsCoreGroup:$iconsExtendedArtifact:$iconsCoreVersion"
+
+        fun resources() = "$componentsGroup:$resourcesArtifact:$composeMultiplatform"
+    }
+
+    // ── Jetpack Compose (Android) ───────────────────────────────────────────
+
+    object JetpackCompose {
+        const val group = "androidx.compose"
+
+        fun foundation() = "$group.foundation:foundation:$jetpackComposeVersion"
+
+        fun material3() = "androidx.compose.material3:material3:1.3.1"
+
+        fun ui() = "$group.ui:ui:$jetpackComposeVersion"
+
+        fun activity() = "androidx.activity:activity-compose:1.9.3"
+
+        fun viewmodel() = "androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7"
+
+        fun icons() = "$group.material:material-icons-core:$jetpackComposeVersion"
     }
 }

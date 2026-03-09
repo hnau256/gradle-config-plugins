@@ -1,10 +1,11 @@
 package org.hnau.plugins.project
 
-internal sealed interface ModuleType {
-    data object Jvm : ModuleType
-
-    class Kmp(
-        val compose: Boolean,
-        val app: Boolean,
-    ) : ModuleType
+/**
+ * Module type enum representing the 4 entry points.
+ */
+enum class ModuleType {
+    JVM,
+    KMP,
+    UI,
+    ANDROID_APP,
 }
