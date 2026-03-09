@@ -33,19 +33,13 @@ class HnauSettingsPlugin : Plugin<Settings> {
             }
         }
 
-        // Propagate settings to all projects via beforeProject hook
+        // Create settings container in root project for module plugins to access
         settings.gradle.beforeProject { project ->
-            project.extensions.extraProperties["hnau.includeCommonsKotlinDependency"] = extension.includeCommonsKotlinDependency
-            extension.publishSettings?.let {
-                project.extensions.extraProperties["hnau.publish.groupId"] = it.groupId
-                project.extensions.extraProperties["hnau.publish.gitUrl"] = it.gitUrl
-                it.artifactId?.let { artifactId -> project.extensions.extraProperties["hnau.publish.artifactId"] = artifactId }
-                it.version?.let { version -> project.extensions.extraProperties["hnau.publish.version"] = version }
-                it.description?.let { desc -> project.extensions.extraProperties["hnau.publish.description"] = desc }
-                it.developerName?.let { name -> project.extensions.extraProperties["hnau.publish.developerName"] = name }
-                it.developerEmail?.let { email -> project.extensions.extraProperties["hnau.publish.developerEmail"] = email }
-                it.licenseName?.let { license -> project.extensions.extraProperties["hnau.publish.licenseName"] = license }
-                it.licenseUrl?.let { url -> project.extensions.extraProperties["hnau.publish.licenseUrl"] = url }
+            if (project == project.rootProject) {
+                project.extensions.create("hnauSettings", HnauSettingsContainer::class.java).apply {
+                    includeCommonsKotlinDependency = extension.includeCommonsKotlinDependency
+                    publishSettings = extension.publishSettings
+                }
             }
         }
     }
@@ -83,4 +77,13 @@ class HnauSettingsPlugin : Plugin<Settings> {
                 ).version(Kotlinx.serializationVersion)
         }
     }
+}
+
+/**
+ * Container class for all hnau settings.
+ * Stored in rootProject.extensions["hnauSettings"] for module plugins to access.
+ */
+open class HnauSettingsContainer {
+    var includeCommonsKotlinDependency: Boolean = true
+    var publishSettings: PublishSettings? = null
 }

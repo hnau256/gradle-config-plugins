@@ -10,6 +10,7 @@ import org.hnau.plugins.Versions
 import org.hnau.plugins.Versions.HnauCommons
 import org.hnau.plugins.Versions.Kotlinx
 import org.hnau.plugins.Versions.PluginIds
+import org.hnau.plugins.settings.HnauSettingsContainer
 import org.hnau.plugins.settings.PublishSettings
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
@@ -41,74 +42,11 @@ object ModuleConfigurator {
         configureCommon(project, settings, type)
     }
 
-    private fun getSettings(project: Project): SettingsData {
-        val extraProps = project.extensions.extraProperties
-        val includeCommons = extraProps["hnau.includeCommonsKotlinDependency"] as? Boolean ?: true
-
-        val publishSettings =
-            if (extraProps.has("hnau.publish.groupId")) {
-                PublishSettings(
-                    groupId = extraProps["hnau.publish.groupId"] as String,
-                    gitUrl = extraProps["hnau.publish.gitUrl"] as String,
-                    artifactId = if (extraProps.has("hnau.publish.artifactId")) extraProps["hnau.publish.artifactId"] as String else null,
-                    version = if (extraProps.has("hnau.publish.version")) extraProps["hnau.publish.version"] as String else null,
-                    description =
-                        if (extraProps.has(
-                                "hnau.publish.description",
-                            )
-                        ) {
-                            extraProps["hnau.publish.description"] as String
-                        } else {
-                            null
-                        },
-                    developerName =
-                        if (extraProps.has(
-                                "hnau.publish.developerName",
-                            )
-                        ) {
-                            extraProps["hnau.publish.developerName"] as String
-                        } else {
-                            null
-                        },
-                    developerEmail =
-                        if (extraProps.has(
-                                "hnau.publish.developerEmail",
-                            )
-                        ) {
-                            extraProps["hnau.publish.developerEmail"] as String
-                        } else {
-                            null
-                        },
-                    licenseName =
-                        if (extraProps.has(
-                                "hnau.publish.licenseName",
-                            )
-                        ) {
-                            extraProps["hnau.publish.licenseName"] as String
-                        } else {
-                            null
-                        },
-                    licenseUrl =
-                        if (extraProps.has(
-                                "hnau.publish.licenseUrl",
-                            )
-                        ) {
-                            extraProps["hnau.publish.licenseUrl"] as String
-                        } else {
-                            null
-                        },
-                )
-            } else {
-                null
+    private fun getSettings(project: Project): HnauSettingsContainer =
+        project.rootProject.extensions.findByType(HnauSettingsContainer::class.java)
+            ?: HnauSettingsContainer().apply {
+                includeCommonsKotlinDependency = true
             }
-
-        return SettingsData(includeCommons, publishSettings)
-    }
-
-    private data class SettingsData(
-        val includeCommonsKotlinDependency: Boolean,
-        val publishSettings: PublishSettings?,
-    )
 
     private fun configureJvm(project: Project) {
         project.plugins.apply(PluginIds.kotlinJvm)
@@ -129,7 +67,7 @@ object ModuleConfigurator {
 
     private fun configureKmp(
         project: Project,
-        settings: SettingsData,
+        settings: HnauSettingsContainer,
     ) {
         project.plugins.apply(PluginIds.kotlinMultiplatform)
         project.plugins.apply(PluginIds.androidKmpLibrary)
@@ -156,7 +94,7 @@ object ModuleConfigurator {
 
     private fun configureUi(
         project: Project,
-        settings: SettingsData,
+        settings: HnauSettingsContainer,
     ) {
         project.plugins.apply(PluginIds.kotlinMultiplatform)
         project.plugins.apply(PluginIds.androidKmpLibrary)
@@ -210,7 +148,7 @@ object ModuleConfigurator {
 
     private fun configureAndroidApp(
         project: Project,
-        settings: SettingsData,
+        settings: HnauSettingsContainer,
     ) {
         project.plugins.apply(PluginIds.androidApplication)
         project.plugins.apply(PluginIds.kotlinAndroid)
@@ -248,7 +186,7 @@ object ModuleConfigurator {
 
     private fun configureCommon(
         project: Project,
-        settings: SettingsData,
+        settings: HnauSettingsContainer,
         type: ModuleType,
     ) {
         project.plugins.apply(PluginIds.vanniktech)
