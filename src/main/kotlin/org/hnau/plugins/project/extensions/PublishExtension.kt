@@ -1,4 +1,4 @@
-package org.hnau.plugins.project
+package org.hnau.plugins.project.extensions
 
 class PublishExtension {
     /** Git repository URL, e.g. "https://github.com/hnau256/mylib". Required. */
