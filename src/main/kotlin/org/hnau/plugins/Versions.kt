@@ -80,11 +80,14 @@ internal object Versions {
         const val group = "org.jetbrains.kotlinx"
         const val serializationCoreArtifact = "kotlinx-serialization-core"
         const val serializationJsonArtifact = "kotlinx-serialization-json"
+        const val serializationCborArtifact = "kotlinx-serialization-cbor"
         const val serializationVersion = "1.10.0"
 
         fun serializationCore() = "$group:$serializationCoreArtifact:$serializationVersion"
 
         fun serializationJson() = "$group:$serializationJsonArtifact:$serializationVersion"
+
+        fun serializationCbor() = "$group:$serializationCborArtifact:$serializationVersion"
     }
 
     object Arrow {

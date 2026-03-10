@@ -65,6 +65,10 @@ class HnauSettingsPlugin : Plugin<Settings> {
             catalog.plugin("ksp", Versions.PluginIds.ksp).versionRef(kspVersion)
             catalog.plugin("vanniktech", Versions.PluginIds.vanniktech).version(Versions.vanniktech)
             catalog.plugin("dokka", Versions.PluginIds.dokka).version(Versions.dokka)
+            catalog.plugin("hnau-jvm", "org.hnau.jvm").version("1.1.17")
+            catalog.plugin("hnau-kmp", "org.hnau.kmp").version("1.1.17")
+            catalog.plugin("hnau-ui", "org.hnau.ui").version("1.1.17")
+            catalog.plugin("hnau-androidapp", "org.hnau.androidapp").version("1.1.17")
 
             // ── Libraries ──────────────────────────────────────────────────────
             catalog.library("commons-app-model", HnauCommons.group, HnauCommons.appModel).versionRef(hnauCommonsVersion)

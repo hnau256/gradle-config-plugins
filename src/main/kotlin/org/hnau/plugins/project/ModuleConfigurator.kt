@@ -228,26 +228,37 @@ object ModuleConfigurator {
 
         project.dependencies.add(configName, Kotlinx.serializationCore())
         project.dependencies.add(configName, Kotlinx.serializationJson())
+        project.dependencies.add(configName, Kotlinx.serializationCbor())
     }
 
     private fun configureKsp(
         project: Project,
         type: ModuleType,
     ) {
-        val processors =
-            listOf(
-                HnauCommons.dep(HnauCommons.Gen.pipeProcessor),
-                HnauCommons.dep(HnauCommons.Gen.sealUpProcessor),
-                HnauCommons.dep(HnauCommons.Gen.enumValuesProcessor),
-                HnauCommons.dep(HnauCommons.Gen.loggableProcessor),
-            )
+        val processors = listOf(
+            HnauCommons.dep(HnauCommons.Gen.pipeProcessor),
+            HnauCommons.dep(HnauCommons.Gen.sealUpProcessor),
+            HnauCommons.dep(HnauCommons.Gen.enumValuesProcessor),
+            HnauCommons.dep(HnauCommons.Gen.loggableProcessor),
+        )
+
+        val annotations = listOf(
+            HnauCommons.dep(HnauCommons.Gen.pipeAnnotations),
+            HnauCommons.dep(HnauCommons.Gen.sealUpAnnotations),
+            HnauCommons.dep(HnauCommons.Gen.enumValuesAnnotations),
+            HnauCommons.dep(HnauCommons.Gen.loggableAnnotations),
+        )
 
         when (type) {
             ModuleType.JVM, ModuleType.ANDROID_APP -> {
+                annotations.forEach { annotation ->
+                    project.dependencies.add("implementation", annotation)
+                }
                 processors.forEach { processor ->
                     project.dependencies.add("ksp", processor)
                 }
             }
+
             ModuleType.KMP, ModuleType.UI -> {
                 processors.forEach { processor ->
                     project.dependencies.add("kspCommonMainMetadata", processor)
@@ -256,6 +267,11 @@ object ModuleConfigurator {
                 val kotlinExtension = project.extensions.getByType(KotlinMultiplatformExtension::class.java)
                 kotlinExtension.sourceSets.named("commonMain") { sourceSet: KotlinSourceSet ->
                     sourceSet.kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
+                    sourceSet.dependencies {
+                        annotations.forEach { annotation ->
+                            implementation(annotation)
+                        }
+                    }
                 }
 
                 project.tasks.withType(KotlinCompile::class.java).configureEach { task ->
