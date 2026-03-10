@@ -1,17 +1,17 @@
 package org.hnau.plugins.project
 
 import com.android.build.api.dsl.ApplicationExtension
+import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryExtension
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
+import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.tasks.compile.JavaCompile
-import org.hnau.plugins.ConfigurationNames
 import org.hnau.plugins.Versions
-import org.hnau.plugins.Versions.HnauCommons
-import org.hnau.plugins.Versions.Kotlinx
-import org.hnau.plugins.Versions.PluginIds
-import org.hnau.plugins.settings.HnauSettingsContainer
-import org.hnau.plugins.settings.PublishSettings
+import org.hnau.plugins.utils.SharedConfig
+import org.hnau.plugins.utils.versions.ComposeDependencyType
+import org.jetbrains.compose.ComposePlugin
+import org.jetbrains.compose.resources.ResourcesExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
@@ -22,256 +22,253 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
  * Called from entry point plugins with their specific ModuleType.
  */
 object ModuleConfigurator {
+
     fun configure(
         project: Project,
         type: ModuleType,
     ) {
-        val settings = getSettings(project)
+        val config = SharedConfig
+            .extractFromRootProject(project)
+            .toProjectConfig(project)
 
-        // Configure based on module type
-        when (type) {
-            ModuleType.JVM -> configureJvm(project)
-            ModuleType.KMP -> configureKmp(project, settings)
-            ModuleType.UI -> configureUi(project, settings)
-            ModuleType.ANDROID_APP -> configureAndroidApp(project, settings)
+        val projectType: ProjectType = when (type) {
+            ModuleType.JVM -> configureJvm(project, config, false)
+            ModuleType.KMP -> configureKmp(project, config, false)
+            ModuleType.UI -> configureKmp(project, config, true)
+            ModuleType.ANDROID_APP -> configureJvm(project, config, true)
         }
 
-        // Common configuration for all types
-        // Note: We check for serialization/ksp AFTER configuring the base module
-        // because user should declare them BEFORE org.hnau plugins
-        configureCommon(project, settings, type)
+        configureCommon(
+            project = project,
+            config = config,
+            projectType = projectType
+        )
     }
 
-    private fun getSettings(project: Project): HnauSettingsContainer =
-        project.rootProject.extensions.findByType(HnauSettingsContainer::class.java)
-            ?: HnauSettingsContainer().apply {
-                includeCommonsKotlinDependency = true
+    private fun configureJvm(
+        project: Project,
+        config: ProjectConfig,
+        addAndroid: Boolean,
+    ): ProjectType {
+
+        val projectType = ProjectType.Jvm
+
+        when (addAndroid) {
+            false -> {
+                project.applyPlugin(Versions.Plugins.kotlinJvm.withoutAlias.withoutVersion)
+
+                project
+                    .extensions
+                    .getByType(KotlinJvmProjectExtension::class.java).jvmToolchain(Versions.jvmTargetInt)
+
+                project.tasks.withType(JavaCompile::class.java).configureEach { task ->
+                    task.options.release.set(Versions.jvmTargetInt)
+                }
             }
 
-    private fun configureJvm(project: Project) {
-        project.plugins.apply(PluginIds.kotlinJvm)
+            true -> {
+                project.applyPlugin(Versions.Plugins.googleServices.withoutAlias.withoutVersion)
+                project.applyPlugin(Versions.Plugins.androidApplication.withoutAlias.withoutVersion)
+                project.applyPlugin(Versions.Plugins.kotlinAndroid.withoutAlias.withoutVersion)
+                project.applyPlugin(Versions.Plugins.kotlinCompose.withoutAlias.withoutVersion)
 
-        val kotlinExtension = project.extensions.getByType(KotlinJvmProjectExtension::class.java)
-        kotlinExtension.jvmToolchain(Versions.jvmTargetInt)
+                project.tasks.withType(KotlinCompile::class.java).configureEach { task ->
+                    task.compilerOptions {
+                        jvmTarget.set(Versions.jvmTarget)
+                    }
+                }
 
-        project.tasks.withType(KotlinCompile::class.java).configureEach { task ->
-            task.compilerOptions {
-                jvmTarget.set(Versions.jvmTarget)
+                project
+                    .extensions
+                    .getByType(ApplicationExtension::class.java)
+                    .apply {
+                        namespace = config.androidNamespace
+                        compileSdk = Versions.compileSdk
+                        defaultConfig {
+                            minSdk = Versions.minSdk
+                        }
+                        compileOptions {
+                            val javaVersion = JavaVersion.toVersion(Versions.jvmTargetInt)
+                            sourceCompatibility = javaVersion
+                            targetCompatibility = javaVersion
+                        }
+                    }
+
+                buildList {
+                    addAll(
+                        ComposeDependencyType
+                            .entries
+                            .map(Versions.Jetpack.compose::get)
+                    )
+                    add(Versions.Jetpack.activity)
+                    add(Versions.Jetpack.viewmodel)
+                }.forEach { composeMultiplatformDependency ->
+                    project.addDependency(
+                        type = projectType,
+                        dependency = composeMultiplatformDependency,
+                    )
+                }
+
             }
         }
 
-        project.tasks.withType(JavaCompile::class.java).configureEach { task ->
-            task.options.release.set(Versions.jvmTargetInt)
-        }
+        return projectType
     }
 
     private fun configureKmp(
         project: Project,
-        settings: HnauSettingsContainer,
-    ) {
-        project.plugins.apply(PluginIds.kotlinMultiplatform)
-        project.plugins.apply(PluginIds.androidKmpLibrary)
+        config: ProjectConfig,
+        addCompose: Boolean,
+    ): ProjectType.Kmp {
+        project.applyPlugin(Versions.Plugins.kotlinMultiplatform.withoutAlias.withoutVersion)
+        project.applyPlugin(Versions.Plugins.androidMultiplatformLibrary.withoutAlias.withoutVersion)
 
-        val kotlinExtension = project.extensions.getByType(KotlinMultiplatformExtension::class.java)
+        if (addCompose) {
+            project.applyPlugin(Versions.Plugins.composeMultiplatform.withoutAlias.withoutVersion)
+            project.applyPlugin(Versions.Plugins.kotlinCompose.withoutAlias.withoutVersion)
+        }
 
-        val androidExtension =
-            (kotlinExtension as ExtensionAware)
-                .extensions
-                .getByType(com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryExtension::class.java)
+        val projectType = ProjectType.Kmp(
+            kmpExtension = project.extensions.getByType(KotlinMultiplatformExtension::class.java)
+        )
 
-        val artifactId = calculateArtifactId(project)
-        val namespace = "${settings.publishSettings?.groupId}.${artifactId.replace('-', '.')}"
+        val androidExtension = (projectType.kmpExtension as ExtensionAware)
+            .extensions
+            .getByType(KotlinMultiplatformAndroidLibraryExtension::class.java)
 
         androidExtension.apply {
-            this.namespace = namespace
+            namespace = config.androidNamespace
             compileSdk = Versions.compileSdk
             minSdk = Versions.minSdk
         }
 
-        kotlinExtension.jvm { withSourcesJar() }
-        kotlinExtension.linuxX64()
-    }
+        when (addCompose) {
+            true -> {
+                projectType
+                    .kmpExtension
+                    .jvm(DesktopTargetName) {
+                        withSourcesJar()
+                    }
 
-    private fun configureUi(
-        project: Project,
-        settings: HnauSettingsContainer,
-    ) {
-        project.plugins.apply(PluginIds.kotlinMultiplatform)
-        project.plugins.apply(PluginIds.androidKmpLibrary)
-        project.plugins.apply(PluginIds.composeMultiplatform)
-        project.plugins.apply(PluginIds.kotlinCompose)
+                project.dependencies.add(
+                    "${DesktopTargetName}MainImplementation",
+                    ComposePlugin.Dependencies(project).desktop.currentOs,
+                )
 
-        val kotlinExtension = project.extensions.getByType(KotlinMultiplatformExtension::class.java)
+                (project.extensions.findByName("compose") as ExtensionAware)
+                    .extensions
+                    .configure(ResourcesExtension::class.java) { resources ->
+                        resources.packageOfResClass = "${config.androidNamespace}.resources"
+                    }
 
-        val androidExtension =
-            (kotlinExtension as ExtensionAware)
-                .extensions
-                .getByType(com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryExtension::class.java)
-
-        val artifactId = calculateArtifactId(project)
-        val namespace = "${settings.publishSettings?.groupId}.${artifactId.replace('-', '.')}"
-
-        androidExtension.apply {
-            this.namespace = namespace
-            compileSdk = Versions.compileSdk
-            minSdk = Versions.minSdk
-        }
-
-        // Create desktop target - Compose Desktop plugin will reconfigure it later
-        kotlinExtension.jvm("desktop") { withSourcesJar() }
-
-        // Add compose desktop dependency for desktopMain source set (auto-detects OS/arch)
-        val composeDeps =
-            org.jetbrains.compose.ComposePlugin
-                .Dependencies(project)
-        project.dependencies.add("desktopMainImplementation", composeDeps.desktop.currentOs)
-
-        val artifactIdClean = artifactId.removePrefix("pinfin-")
-        val resourcesPackage = "hnau.pinfin.${artifactIdClean.replace('-', '.')}.resources"
-
-        (project.extensions.findByName("compose") as? org.jetbrains.compose.ComposeExtension)?.let { composeExt ->
-            (composeExt as ExtensionAware)
-                .extensions
-                .configure(org.jetbrains.compose.resources.ResourcesExtension::class.java) {
-                    it.packageOfResClass = resourcesPackage
-                }
-        }
-
-        project.dependencies.add(ConfigurationNames.commonMainImplementation, Versions.Compose.runtime())
-        project.dependencies.add(ConfigurationNames.commonMainImplementation, Versions.Compose.foundation())
-        project.dependencies.add(ConfigurationNames.commonMainImplementation, Versions.Compose.ui())
-        project.dependencies.add(ConfigurationNames.commonMainImplementation, Versions.Compose.material3())
-        project.dependencies.add(ConfigurationNames.commonMainImplementation, Versions.Compose.iconsCore())
-        project.dependencies.add(ConfigurationNames.commonMainImplementation, Versions.Compose.iconsExtended())
-        project.dependencies.add(ConfigurationNames.commonMainImplementation, Versions.Compose.resources())
-    }
-
-    private fun configureAndroidApp(
-        project: Project,
-        settings: HnauSettingsContainer,
-    ) {
-        project.plugins.apply(PluginIds.androidApplication)
-        project.plugins.apply(PluginIds.kotlinAndroid)
-        project.plugins.apply(PluginIds.kotlinCompose)
-
-        val androidExtension = project.extensions.getByType(ApplicationExtension::class.java)
-        androidExtension.apply {
-            compileSdk = Versions.compileSdk
-            defaultConfig {
-                minSdk = Versions.minSdk
+                ComposeDependencyType
+                    .entries
+                    .map(Versions.composeMultiplatform::get)
+                    .forEach { composeMultiplatformDependency ->
+                        project
+                            .addDependency(
+                                type = projectType,
+                                dependency = composeMultiplatformDependency,
+                            )
+                    }
             }
-            compileOptions {
-                sourceCompatibility =
-                    org.gradle.api.JavaVersion
-                        .toVersion(Versions.jvmTargetInt)
-                targetCompatibility =
-                    org.gradle.api.JavaVersion
-                        .toVersion(Versions.jvmTargetInt)
+
+            false -> {
+
+                projectType
+                    .kmpExtension
+                    .jvm {
+                        withSourcesJar()
+                    }
+
+                projectType
+                    .kmpExtension
+                    .linuxX64()
             }
         }
 
-        project.tasks.withType(KotlinCompile::class.java).configureEach { task ->
-            task.compilerOptions {
-                jvmTarget.set(Versions.jvmTarget)
-            }
-        }
-
-        project.dependencies.add("implementation", Versions.JetpackCompose.foundation())
-        project.dependencies.add("implementation", Versions.JetpackCompose.material3())
-        project.dependencies.add("implementation", Versions.JetpackCompose.ui())
-        project.dependencies.add("implementation", Versions.JetpackCompose.activity())
-        project.dependencies.add("implementation", Versions.JetpackCompose.viewmodel())
-        project.dependencies.add("implementation", Versions.JetpackCompose.icons())
+        return projectType
     }
 
     private fun configureCommon(
         project: Project,
-        settings: HnauSettingsContainer,
-        type: ModuleType,
+        config: ProjectConfig,
+        projectType: ProjectType,
     ) {
-        project.plugins.apply(PluginIds.vanniktech)
 
-        if (settings.includeCommonsKotlinDependency) {
-            val configName =
-                if (type == ModuleType.JVM || type == ModuleType.ANDROID_APP) {
-                    "implementation"
-                } else {
-                    ConfigurationNames.commonMainImplementation
-                }
-            project.dependencies.add(configName, HnauCommons.dep(HnauCommons.kotlin))
+        if (config.asLibraryId != Versions.HnauCommons.kotlin.withoutVersion) {
+            project.addDependency(
+                type = projectType,
+                dependency = Versions.HnauCommons.kotlin,
+            )
         }
 
-        // Check for plugins that may be applied AFTER org.hnau plugins using withId
-        project.plugins.withId(PluginIds.kotlinSerialization) {
-            configureSerialization(project, type)
-        }
+        configureSerializationIfNeed(
+            project = project,
+            projectType = projectType,
+        )
 
-        project.plugins.withId(PluginIds.ksp) {
-            configureKsp(project, type)
-        }
+        configureKspIdNeed(
+            project = project,
+            projectType = projectType,
+        )
 
-        settings.publishSettings?.let { publishSettings ->
-            configurePublishing(project, publishSettings, type)
+        config.publish?.let { publish ->
+            configurePublishing(
+                project = project,
+                publish = publish,
+                projectConfig = config,
+                projectType = projectType,
+            )
         }
     }
 
-    private fun configureSerialization(
+    private fun configureSerializationIfNeed(
         project: Project,
-        type: ModuleType,
+        projectType: ProjectType,
     ) {
-        val configName =
-            if (type == ModuleType.JVM || type == ModuleType.ANDROID_APP) {
-                "implementation"
-            } else {
-                ConfigurationNames.commonMainImplementation
-            }
+        if (!project.hasPlugin(Versions.Plugins.kotlinSerialization.withoutAlias.withoutVersion)) {
+            return
+        }
 
-        project.dependencies.add(configName, Kotlinx.serializationCore())
-        project.dependencies.add(configName, Kotlinx.serializationJson())
-        project.dependencies.add(configName, Kotlinx.serializationCbor())
+        Versions
+            .Kotlinx
+            .serialization
+            .forEach { dependency ->
+                project.addDependency(
+                    type = projectType,
+                    dependency = dependency,
+                )
+            }
     }
 
-    private fun configureKsp(
+    private fun configureKspIdNeed(
         project: Project,
-        type: ModuleType,
+        projectType: ProjectType,
     ) {
-        val processors = listOf(
-            HnauCommons.dep(HnauCommons.Gen.pipeProcessor),
-            HnauCommons.dep(HnauCommons.Gen.sealUpProcessor),
-            HnauCommons.dep(HnauCommons.Gen.enumValuesProcessor),
-            HnauCommons.dep(HnauCommons.Gen.loggableProcessor),
-        )
+        if (!project.hasPlugin(Versions.Plugins.ksp.withoutAlias.withoutVersion)) {
+            return
+        }
 
-        val annotations = listOf(
-            HnauCommons.dep(HnauCommons.Gen.pipeAnnotations),
-            HnauCommons.dep(HnauCommons.Gen.sealUpAnnotations),
-            HnauCommons.dep(HnauCommons.Gen.enumValuesAnnotations),
-            HnauCommons.dep(HnauCommons.Gen.loggableAnnotations),
-        )
+        Versions.HnauCommons.gen.forEach { annotationWithProcessor ->
+            project.addDependency(
+                type = projectType,
+                dependency = annotationWithProcessor.annotation,
+            )
+            project.addDependency(
+                configurationName = when (projectType) {
+                    ProjectType.Jvm -> "ksp"
+                    is ProjectType.Kmp -> "kspCommonMainMetadata"
+                },
+                dependency = annotationWithProcessor.processor,
+            )
+        }
 
-        when (type) {
-            ModuleType.JVM, ModuleType.ANDROID_APP -> {
-                annotations.forEach { annotation ->
-                    project.dependencies.add("implementation", annotation)
-                }
-                processors.forEach { processor ->
-                    project.dependencies.add("ksp", processor)
-                }
-            }
-
-            ModuleType.KMP, ModuleType.UI -> {
-                processors.forEach { processor ->
-                    project.dependencies.add("kspCommonMainMetadata", processor)
-                }
-
-                val kotlinExtension = project.extensions.getByType(KotlinMultiplatformExtension::class.java)
-                kotlinExtension.sourceSets.named("commonMain") { sourceSet: KotlinSourceSet ->
+        when (projectType) {
+            ProjectType.Jvm -> Unit
+            is ProjectType.Kmp -> {
+                projectType.commonMainSourceSet.configure { sourceSet: KotlinSourceSet ->
                     sourceSet.kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
-                    sourceSet.dependencies {
-                        annotations.forEach { annotation ->
-                            implementation(annotation)
-                        }
-                    }
                 }
 
                 project.tasks.withType(KotlinCompile::class.java).configureEach { task ->
@@ -285,44 +282,48 @@ object ModuleConfigurator {
 
     private fun configurePublishing(
         project: Project,
-        settings: PublishSettings,
-        type: ModuleType,
+        publish: ProjectConfig.Publish,
+        projectConfig: ProjectConfig,
+        projectType: ProjectType,
     ) {
-        val artifactId = calculateArtifactId(project)
+        project.applyPlugin(Versions.Plugins.dokka.withoutAlias.withoutVersion)
+        project.applyPlugin(Versions.Plugins.vanniktech.withoutAlias.withoutVersion)
+        project.applyPlugin(Versions.Plugins.signing)
+
 
         project.extensions.configure(MavenPublishBaseExtension::class.java) { publishing ->
             publishing.publishToMavenCentral()
 
             publishing.pom { pom ->
-                pom.name.set(settings.artifactId ?: artifactId)
-                pom.description.set(settings.description ?: "${settings.groupId}:$artifactId")
-                pom.url.set(settings.gitUrl)
+                pom.name.set(projectConfig.artifactId.artifactId)
+                pom.description.set(publish.description)
+                pom.url.set(publish.gitUrl)
 
                 pom.licenses { licenses ->
                     licenses.license { license ->
-                        license.name.set(settings.licenseName ?: "The Apache License, Version 2.0")
-                        license.url.set(settings.licenseUrl ?: "http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        license.name.set(publish.licenseName)
+                        license.url.set(publish.licenseUrl)
                     }
                 }
 
                 pom.developers { developers ->
                     developers.developer { developer ->
-                        developer.name.set(settings.developerName ?: "HNAU")
-                        developer.email.set(settings.developerEmail)
+                        developer.name.set(publish.developerName)
+                        developer.email.set(publish.developerEmail)
                     }
                 }
 
                 pom.scm { scm ->
-                    scm.connection.set("scm:git:${settings.gitUrl}")
-                    scm.developerConnection.set("scm:git:${settings.gitUrl}")
-                    scm.url.set(settings.gitUrl)
+                    scm.connection.set("scm:git:${publish.gitUrl}")
+                    scm.developerConnection.set("scm:git:${publish.gitUrl}")
+                    scm.url.set(publish.gitUrl)
                 }
             }
         }
 
-        project.group = settings.groupId
-        settings.version?.let { project.version = it }
+        project.group = projectConfig.groupId.groupId
+        project.version = publish.version
     }
-
-    private fun calculateArtifactId(project: Project): String = project.path.removePrefix(":").replace(":", "-")
 }
+
+private const val DesktopTargetName = "desktop"

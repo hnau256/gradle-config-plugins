@@ -1,153 +1,133 @@
 package org.hnau.plugins
 
+import org.hnau.plugins.utils.versions.Aliased
+import org.hnau.plugins.utils.versions.ComposeDependencyTypeValues
+import org.hnau.plugins.utils.versions.GroupId
+import org.hnau.plugins.utils.versions.AnnotationWithProcessor
+import org.hnau.plugins.utils.versions.LibraryId
+import org.hnau.plugins.utils.versions.PluginId
+import org.hnau.plugins.utils.versions.Version
+import org.hnau.plugins.utils.versions.Versioned
+import org.hnau.plugins.utils.versions.withAlias
+import org.hnau.plugins.utils.versions.withArtifact
+import org.hnau.plugins.utils.versions.withVersion
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
-/**
- * Single source of truth for all dependency/plugin versions and Maven coordinates.
- * When bumping [kotlin], also update `kotlin` in gradle/libs.versions.toml.
- */
 internal object Versions {
-    // Bump together with `kotlin` in gradle/libs.versions.toml
-    const val kotlin = "2.3.10"
-
-    // Bump together with `agp` in gradle/libs.versions.toml
-    const val agp = "9.1.0"
-    const val ksp = "2.3.6"
-    const val composeMultiplatform = "1.10.2"
-
-    // Jetpack Compose
-    const val jetpackComposeVersion = "1.7.6"
-    const val composeCompilerVersion = "2.3.10" // Same as Kotlin version for Kotlin 2.x
-
-    // Bump together with `vanniktech` in gradle/libs.versions.toml
-    const val vanniktech = "0.36.0"
-
-    // Bump together with `dokka` in gradle/libs.versions.toml
-    const val dokka = "2.1.0"
 
     // Android SDK
-    const val compileSdk = 36
-    const val minSdk = 23
+    val compileSdk = 36
+    val minSdk = 23
 
     // JVM bytecode — single declaration, used for toolchain and compilerOptions
-    const val jvmTargetInt = 17
+    val jvmTargetInt = 17
     val jvmTarget = JvmTarget.fromTarget(jvmTargetInt.toString())
 
-    // ── Plugin IDs ──────────────────────────────────────────────────────────
 
-    object PluginIds {
-        const val kotlinMultiplatform = "org.jetbrains.kotlin.multiplatform"
-        const val kotlinJvm = "org.jetbrains.kotlin.jvm"
-        const val kotlinAndroid = "org.jetbrains.kotlin.android"
-        const val kotlinSerialization = "org.jetbrains.kotlin.plugin.serialization"
-        const val kotlinCompose = "org.jetbrains.kotlin.plugin.compose"
-        const val androidKmpLibrary = "com.android.kotlin.multiplatform.library"
-        const val androidLibrary = "com.android.library"
-        const val androidApplication = "com.android.application"
-        const val googleServices = "com.google.gms.google-services"
-        const val ksp = "com.google.devtools.ksp"
-        const val composeMultiplatform = "org.jetbrains.compose"
-        const val dokka = "org.jetbrains.dokka"
-        const val vanniktech = "com.vanniktech.maven.publish"
-        const val signing = "signing"
+    object Plugins {
+        val kotlinMultiplatform =
+            PluginId("org.jetbrains.kotlin.multiplatform") withVersion Version.Kotlin withAlias "kotlin-multiplatform"
+
+        val kotlinJvm =
+            PluginId("org.jetbrains.kotlin.jvm") withVersion Version.Kotlin withAlias "kotlin-jvm"
+
+        val kotlinAndroid =
+            PluginId("org.jetbrains.kotlin.android") withVersion Version.Kotlin withAlias "kotlin-android"
+
+        val kotlinSerialization =
+            PluginId("org.jetbrains.kotlin.plugin.serialization") withVersion Version.Kotlin withAlias "kotlin-serialization"
+
+        val kotlinCompose =
+            PluginId("org.jetbrains.kotlin.plugin.compose") withVersion Version.Kotlin withAlias "kotlin-compose"
+
+        val androidMultiplatformLibrary =
+            PluginId("com.android.kotlin.multiplatform.library") withVersion Version.AndroidGradlePlugin withAlias "android-multiplatformLibrary"
+
+        val androidApplication =
+            PluginId("com.android.application") withVersion Version.AndroidGradlePlugin withAlias "android-application"
+
+
+        val googleServices =
+            PluginId("com.google.gms.google-services") withVersion Version.GoogleServicesPlugin withAlias "googleServices"
+
+        val ksp =
+            PluginId("com.google.devtools.ksp") withVersion Version.KspPlugin withAlias "ksp"
+
+        val composeMultiplatform =
+            PluginId("org.jetbrains.compose") withVersion Version.ComposeMultiplatform withAlias "composeMultiplatform"
+
+        val dokka =
+            PluginId("org.jetbrains.dokka") withVersion Version.DokkaPlugin withAlias "dokka"
+
+        val vanniktech =
+            PluginId("com.vanniktech.maven.publish") withVersion Version.VanniktechPlugin withAlias "vanniktech"
+
+        val signing: PluginId =
+            PluginId("signing")
+
+        //update in build.gradle.kts
+        val hnauProject: List<Aliased<Versioned<PluginId>>> = listOf("jvm", "kmp", "ui", "androidapp").map { suffix ->
+            PluginId("org.hnau.$suffix") withVersion Version.HnauPlugins withAlias "hnau-$suffix"
+        }
     }
 
-    // ── Artifact descriptors ────────────────────────────────────────────────
-
     object HnauCommons {
-        const val group = "org.hnau.commons"
-        const val version = "1.2.4"
+        private val group = GroupId("org.hnau.commons")
 
-        fun dep(artifact: String) = "$group:$artifact:$version"
+        val kotlin = group withArtifact "kotlin" withVersion Version.HnauCommons
 
-        const val kotlin = "kotlin"
-        const val appModel = "app-model"
-        const val appProjector = "app-projector"
+        val appModel = group withArtifact "app-model" withVersion Version.HnauCommons withAlias "commons-app-model"
 
-        object Gen {
-            const val pipeAnnotations = "gen-pipe-annotations"
-            const val pipeProcessor = "gen-pipe-processor"
-            const val sealUpAnnotations = "gen-sealup-annotations"
-            const val sealUpProcessor = "gen-sealup-processor"
-            const val enumValuesAnnotations = "gen-enumvalues-annotations"
-            const val enumValuesProcessor = "gen-enumvalues-processor"
-            const val loggableAnnotations = "gen-loggable-annotations"
-            const val loggableProcessor = "gen-loggable-processor"
+        val appProjector = group withArtifact "app-projector" withVersion Version.HnauCommons withAlias "commons-app-projector"
+
+        val gen: List<AnnotationWithProcessor<Versioned<LibraryId>>> = listOf(
+            "pipe", "loggable", "sealup", "enumvalues",
+        ).map { type ->
+            AnnotationWithProcessor(
+                annotation = "annotations",
+                processor = "processor",
+            ).map { suffix ->
+                group withArtifact "gen-$type-$suffix" withVersion Version.HnauCommons
+            }
         }
     }
 
     object Kotlinx {
-        const val group = "org.jetbrains.kotlinx"
-        const val serializationCoreArtifact = "kotlinx-serialization-core"
-        const val serializationJsonArtifact = "kotlinx-serialization-json"
-        const val serializationCborArtifact = "kotlinx-serialization-cbor"
-        const val serializationVersion = "1.10.0"
+        private val group = GroupId("org.jetbrains.kotlinx")
 
-        fun serializationCore() = "$group:$serializationCoreArtifact:$serializationVersion"
+        val serialization = listOf("core", "json", "cbor").map { suffix ->
+            group withArtifact "kotlinx-serialization-$suffix" withVersion Version.KotlinxSerialization
+        }
 
-        fun serializationJson() = "$group:$serializationJsonArtifact:$serializationVersion"
-
-        fun serializationCbor() = "$group:$serializationCborArtifact:$serializationVersion"
+        val immutable: Aliased<Versioned<LibraryId>> =
+            group withArtifact "kotlinx-collections-immutable" withVersion Version.KotlinImmutable withAlias "kotlin-immutable"
     }
 
-    object Arrow {
-        const val group = "io.arrow-kt"
-        const val opticsKspPluginArtifact = "arrow-optics-ksp-plugin"
-        const val coreArtifact = "arrow-core"
-        const val opticsArtifact = "arrow-optics"
-        const val version = "2.2.2"
+    val composeMultiplatform: ComposeDependencyTypeValues<Versioned<LibraryId>> = ComposeDependencyTypeValues(
+        runtime = "org.jetbrains.compose.runtime" withArtifact "runtime" withVersion Version.ComposeMultiplatform,
+        foundation = "org.jetbrains.compose.foundation" withArtifact "foundation" withVersion Version.ComposeMultiplatform,
+        ui = "org.jetbrains.compose.ui" withArtifact "ui" withVersion Version.ComposeMultiplatform,
+        material3 = "org.jetbrains.compose.material3" withArtifact "material3" withVersion Version.ComposeMultiplatformMaterial3,
+        iconsCore = "org.jetbrains.compose.material" withArtifact "material-icons-core" withVersion Version.CommposeMultiplatformIcons,
+        iconsExtended = "org.jetbrains.compose.material" withArtifact "material-icons-extended" withVersion Version.CommposeMultiplatformIcons,
+    )
 
-        fun opticsKspPlugin() = "$group:$opticsKspPluginArtifact:$version"
-    }
+    object Jetpack {
 
-    object Compose {
-        const val material3Version = "1.10.0-alpha05"
-        const val iconsCoreVersion = "1.7.3"
+        val compose: ComposeDependencyTypeValues<Versioned<LibraryId>> = ComposeDependencyTypeValues(
+            runtime = "androidx.compose.runtime" withArtifact "runtime" withVersion Version.JetpackCompose,
+            foundation = "androidx.compose.foundation" withArtifact "foundation" withVersion Version.JetpackCompose,
+            material3 = "androidx.compose.material3" withArtifact "material3" withVersion Version.JetpackComposeMaterial3,
+            ui = "androidx.compose.ui" withArtifact "ui" withVersion Version.JetpackCompose,
+            iconsCore = "androidx.compose.material" withArtifact "material-icons-core" withVersion Version.JetpackCompose,
+            iconsExtended = "androidx.compose.material" withArtifact "material-icons-extended" withVersion Version.JetpackCompose,
+        )
 
-        const val runtimeGroup = "org.jetbrains.compose.runtime"
-        const val runtimeArtifact = "runtime"
-        const val foundationGroup = "org.jetbrains.compose.foundation"
-        const val foundationArtifact = "foundation"
-        const val uiGroup = "org.jetbrains.compose.ui"
-        const val uiArtifact = "ui"
-        const val material3Group = "org.jetbrains.compose.material3"
-        const val material3Artifact = "material3"
-        const val iconsCoreGroup = "org.jetbrains.compose.material"
-        const val iconsCoreArtifact = "material-icons-core"
-        const val iconsExtendedArtifact = "material-icons-extended"
-        const val componentsGroup = "org.jetbrains.compose.components"
-        const val resourcesArtifact = "components-resources"
 
-        fun runtime() = "$runtimeGroup:$runtimeArtifact:$composeMultiplatform"
+        val activity: Versioned<LibraryId> =
+            "androidx.activity" withArtifact "activity-compose" withVersion Version.ActivityCompose
 
-        fun foundation() = "$foundationGroup:$foundationArtifact:$composeMultiplatform"
-
-        fun ui() = "$uiGroup:$uiArtifact:$composeMultiplatform"
-
-        fun material3() = "$material3Group:$material3Artifact:$material3Version"
-
-        fun iconsCore() = "$iconsCoreGroup:$iconsCoreArtifact:$iconsCoreVersion"
-
-        fun iconsExtended() = "$iconsCoreGroup:$iconsExtendedArtifact:$iconsCoreVersion"
-
-        fun resources() = "$componentsGroup:$resourcesArtifact:$composeMultiplatform"
-    }
-
-    // ── Jetpack Compose (Android) ───────────────────────────────────────────
-
-    object JetpackCompose {
-        const val group = "androidx.compose"
-
-        fun foundation() = "$group.foundation:foundation:$jetpackComposeVersion"
-
-        fun material3() = "androidx.compose.material3:material3:1.3.1"
-
-        fun ui() = "$group.ui:ui:$jetpackComposeVersion"
-
-        fun activity() = "androidx.activity:activity-compose:1.9.3"
-
-        fun viewmodel() = "androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7"
-
-        fun icons() = "$group.material:material-icons-core:$jetpackComposeVersion"
+        val viewmodel: Versioned<LibraryId> =
+            "androidx.lifecycle" withArtifact "lifecycle-viewmodel-compose" withVersion Version.LifecycleViewmodelCompose
     }
 }

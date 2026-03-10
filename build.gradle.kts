@@ -49,11 +49,14 @@ kotlin {
     }
 }
 
-val versionString = "1.1.17"
+
+// Bump this together with `Versions.plugins.hnau` in Versions.kt
+val versionString = "1.2.0"
 
 group = "org.hnau.plugins"
 version = versionString
 
+// Bump this together with Versions.plugins.hnau
 gradlePlugin {
     plugins {
         create("hnauSettings") {

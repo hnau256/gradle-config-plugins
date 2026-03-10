@@ -5,12 +5,16 @@ kotlin = "2.3.10"
 agp = "9.1.0"
 # Bump this together with `Versions.jvmTargetInt` in Versions.kt
 jvm = "17"
+# Bump this together with `Versions.vanniktech` in Versions.kt
 vanniktech = "0.36.0"
+# Bump this together with `Versions.dokka` in Versions.kt
 dokka = "2.1.0"
 # Bump this together with `Versions.ksp` in Versions.kt
 ksp = "2.3.6"
 # Bump this together with `Versions.composeMultiplatform` in Versions.kt
-compose = "1.10.2"
+composeMultiplatform = "1.10.2"
+# Bump this together with `Versions.googleServices` in Versions.kt
+googleServices = "4.4.4"
 
 [libraries]
 agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
@@ -19,8 +23,8 @@ kgp = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kot
 kgp-serialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "kotlin" }
 kgp-compose = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
 ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
-compose = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "compose" }
-google-services = { module = "com.google.gms:google-services", version = "4.4.2" }
+compose = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "composeMultiplatform" }
+google-services = { module = "com.google.gms:google-services", version.ref = "googleServices" }
 vanniktech = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "vanniktech" }
 dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
 

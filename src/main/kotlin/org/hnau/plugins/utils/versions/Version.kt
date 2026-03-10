@@ -1,0 +1,27 @@
+package org.hnau.plugins.utils.versions
+
+enum class Version(
+    val version: String,
+) {
+    Kotlin("2.3.10"),
+    AndroidGradlePlugin("9.1.0"),
+    ComposeMultiplatform("1.10.2"),
+    ComposeMultiplatformMaterial3("1.10.0-alpha05"),
+    HnauPlugins("1.2.0"),
+    HnauCommons("1.2.4"),
+    KotlinxSerialization("1.10.0"),
+    CommposeMultiplatformIcons("1.7.3"),
+    JetpackCompose("1.7.6"),
+    JetpackComposeMaterial3("1.3.1"),
+    ActivityCompose("1.9.3"),
+    LifecycleViewmodelCompose("2.8.7"),
+    GoogleServicesPlugin("4.4.4"),
+    KspPlugin("2.3.6"),
+    DokkaPlugin("2.1.0"),
+    VanniktechPlugin("0.36.0"),
+    KotlinImmutable("0.4.0"),;
+
+    val alias: Alias = name
+        .replaceFirstChar(Char::lowercase)
+        .let(::Alias)
+}
