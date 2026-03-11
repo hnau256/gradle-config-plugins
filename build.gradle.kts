@@ -51,40 +51,44 @@ kotlin {
 
 
 // Bump this together with `Versions.plugins.hnau` in Versions.kt
-val versionString = "1.2.0"
+val versionString = "1.2.2"
+val groupString = "org.hnau.gradle"
+val artifactString = "plugins"
 
-group = "org.hnau.plugins"
+group = groupString
 version = versionString
 
 // Bump this together with Versions.plugins.hnau
 gradlePlugin {
     plugins {
-        create("hnauSettings") {
-            id = "org.hnau.settings"
+        val prefix = "org.hnau.plugin"
+        
+        create("HnauSettings") {
+            id = "$prefix.settings"
             implementationClass = "org.hnau.plugins.settings.HnauSettingsPlugin"
             displayName = "Hnau Settings Plugin"
             description = "Centralized settings: version catalog, pluginManagement, auto-include modules, allModules defaults"
         }
-        create("hnauJvm") {
-            id = "org.hnau.jvm"
+        create("HnauJvm") {
+            id = "$prefix.jvm"
             implementationClass = "org.hnau.plugins.project.entrypoints.HnauJvmPlugin"
             displayName = "Hnau JVM Plugin"
             description = "Kotlin JVM module configuration with auto-detection"
         }
-        create("hnauKmp") {
-            id = "org.hnau.kmp"
+        create("HnauKmp") {
+            id = "$prefix.kmp"
             implementationClass = "org.hnau.plugins.project.entrypoints.HnauKmpPlugin"
             displayName = "Hnau KMP Plugin"
             description = "Kotlin Multiplatform module configuration with auto-detection"
         }
-        create("hnauUi") {
-            id = "org.hnau.ui"
+        create("HnauUi") {
+            id = "$prefix.ui"
             implementationClass = "org.hnau.plugins.project.entrypoints.HnauUiPlugin"
             displayName = "Hnau UI Plugin"
             description = "Compose Multiplatform module configuration with auto-detection"
         }
-        create("hnauAndroidApp") {
-            id = "org.hnau.androidapp"
+        create("HnauAndroidApp") {
+            id = "$prefix.androidapp"
             implementationClass = "org.hnau.plugins.project.entrypoints.HnauAndroidAppPlugin"
             displayName = "Hnau Android App Plugin"
             description = "Android Application module configuration with auto-detection"
@@ -105,8 +109,8 @@ extensions.configure<MavenPublishBaseExtension> {
     )
 
     coordinates(
-        groupId = "org.hnau.plugins",
-        artifactId = "plugins",
+        groupId = groupString,
+        artifactId = artifactString,
         version = versionString,
     )
 

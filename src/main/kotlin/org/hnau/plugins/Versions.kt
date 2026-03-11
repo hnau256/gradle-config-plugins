@@ -67,7 +67,7 @@ internal object Versions {
 
         //update in build.gradle.kts
         val hnauProject: List<Aliased<Versioned<PluginId>>> = listOf("jvm", "kmp", "ui", "androidapp").map { suffix ->
-            PluginId("org.hnau.$suffix") withVersion Version.HnauPlugins withAlias "hnau-$suffix"
+            PluginId("org.hnau.plugin.$suffix") withVersion Version.HnauPlugins withAlias "hnau-$suffix"
         }
     }
 
