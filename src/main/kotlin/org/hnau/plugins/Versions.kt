@@ -72,7 +72,7 @@ internal object Versions {
     }
 
     object HnauCommons {
-        private val group = GroupId("org.hnau.commons")
+        val group = GroupId("org.hnau.commons")
 
         val kotlin = group withArtifact "kotlin" withVersion Version.HnauCommons
 

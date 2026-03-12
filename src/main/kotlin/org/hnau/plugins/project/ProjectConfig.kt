@@ -28,9 +28,9 @@ fun SharedConfig.toProjectConfig(
 ): ProjectConfig {
 
     val artifactId = project
-        .name
+        .path
         .drop(1)
-        .replace(':', '.')
+        .replace(':', '-')
         .let(::ArtifactId)
 
     return ProjectConfig(
@@ -56,10 +56,4 @@ val ProjectConfig.androidNamespace: String
         artifactId.artifactId.replace('-', '.')
     ).joinToString(
         separator = ".",
-    )
-
-val ProjectConfig.asLibraryId: LibraryId
-    get() = LibraryId(
-        groupId = groupId,
-        artifactId = artifactId,
     )

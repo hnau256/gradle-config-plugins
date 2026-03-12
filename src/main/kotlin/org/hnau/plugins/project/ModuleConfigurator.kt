@@ -6,6 +6,7 @@ import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
+import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.compile.JavaCompile
 import org.hnau.plugins.Versions
 import org.hnau.plugins.utils.SharedConfig
@@ -17,10 +18,6 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-/**
- * Core configurator for all module types.
- * Called from entry point plugins with their specific ModuleType.
- */
 object ModuleConfigurator {
 
     fun configure(
@@ -32,10 +29,29 @@ object ModuleConfigurator {
             .toProjectConfig(project)
 
         val projectType: ProjectType = when (type) {
-            ModuleType.JVM -> configureJvm(project, config, false)
-            ModuleType.KMP -> configureKmp(project, config, false)
-            ModuleType.UI -> configureKmp(project, config, true)
-            ModuleType.ANDROID_APP -> configureJvm(project, config, true)
+            ModuleType.JVM -> configureJvm(
+                project = project,
+                config = config,
+                addAndroid = false,
+            )
+
+            ModuleType.KMP -> configureKmp(
+                project = project,
+                config = config,
+                addCompose = false,
+            )
+
+            ModuleType.UI -> configureKmp(
+                project = project,
+                config = config,
+                addCompose = true,
+            )
+
+            ModuleType.ANDROID_APP -> configureJvm(
+                project = project,
+                config = config,
+                addAndroid = true,
+            )
         }
 
         configureCommon(
@@ -59,7 +75,13 @@ object ModuleConfigurator {
 
                 project
                     .extensions
-                    .getByType(KotlinJvmProjectExtension::class.java).jvmToolchain(Versions.jvmTargetInt)
+                    .getByType(KotlinJvmProjectExtension::class.java)
+                    .jvmToolchain(Versions.jvmTargetInt)
+
+                project
+                    .extensions
+                    .getByType(JavaPluginExtension::class.java)
+                    .targetCompatibility = JavaVersion.toVersion(Versions.jvmTargetInt)
 
                 project.tasks.withType(JavaCompile::class.java).configureEach { task ->
                     task.options.release.set(Versions.jvmTargetInt)
@@ -71,12 +93,6 @@ object ModuleConfigurator {
                 project.applyPlugin(Versions.Plugins.androidApplication.withoutAlias.withoutVersion)
                 project.applyPlugin(Versions.Plugins.kotlinAndroid.withoutAlias.withoutVersion)
                 project.applyPlugin(Versions.Plugins.kotlinCompose.withoutAlias.withoutVersion)
-
-                project.tasks.withType(KotlinCompile::class.java).configureEach { task ->
-                    task.compilerOptions {
-                        jvmTarget.set(Versions.jvmTarget)
-                    }
-                }
 
                 project
                     .extensions
@@ -112,6 +128,12 @@ object ModuleConfigurator {
             }
         }
 
+        project.tasks.withType(KotlinCompile::class.java).configureEach { task ->
+            task.compilerOptions {
+                jvmTarget.set(Versions.jvmTarget)
+            }
+        }
+
         return projectType
     }
 
@@ -122,6 +144,11 @@ object ModuleConfigurator {
     ): ProjectType.Kmp {
         project.applyPlugin(Versions.Plugins.kotlinMultiplatform.withoutAlias.withoutVersion)
         project.applyPlugin(Versions.Plugins.androidMultiplatformLibrary.withoutAlias.withoutVersion)
+
+        project
+            .extensions
+            .getByType(KotlinMultiplatformExtension::class.java)
+            .jvmToolchain(Versions.jvmTargetInt)
 
         if (addCompose) {
             project.applyPlugin(Versions.Plugins.composeMultiplatform.withoutAlias.withoutVersion)
@@ -196,7 +223,7 @@ object ModuleConfigurator {
         projectType: ProjectType,
     ) {
 
-        if (config.asLibraryId != Versions.HnauCommons.kotlin.withoutVersion) {
+        if (config.groupId != Versions.HnauCommons.group) {
             project.addDependency(
                 type = projectType,
                 dependency = Versions.HnauCommons.kotlin,
@@ -218,7 +245,6 @@ object ModuleConfigurator {
                 project = project,
                 publish = publish,
                 projectConfig = config,
-                projectType = projectType,
             )
         }
     }
@@ -284,7 +310,6 @@ object ModuleConfigurator {
         project: Project,
         publish: ProjectConfig.Publish,
         projectConfig: ProjectConfig,
-        projectType: ProjectType,
     ) {
         project.applyPlugin(Versions.Plugins.dokka.withoutAlias.withoutVersion)
         project.applyPlugin(Versions.Plugins.vanniktech.withoutAlias.withoutVersion)
@@ -293,6 +318,11 @@ object ModuleConfigurator {
 
         project.extensions.configure(MavenPublishBaseExtension::class.java) { publishing ->
             publishing.publishToMavenCentral()
+            publishing.coordinates(
+                groupId = projectConfig.groupId.groupId,
+                artifactId = projectConfig.artifactId.artifactId,
+                version = publish.version,
+            )
 
             publishing.pom { pom ->
                 pom.name.set(projectConfig.artifactId.artifactId)
@@ -320,9 +350,6 @@ object ModuleConfigurator {
                 }
             }
         }
-
-        project.group = projectConfig.groupId.groupId
-        project.version = publish.version
     }
 }
 
