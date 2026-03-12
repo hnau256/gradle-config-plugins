@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.vanniktech)
     alias(libs.plugins.dokka)
     `java-gradle-plugin`
+    signing
 }
 
 repositories {
@@ -51,7 +52,7 @@ kotlin {
 
 
 // Bump this together with `Versions.plugins.hnau` in Versions.kt
-val versionString = "1.2.3"
+val versionString = "1.2.4"
 val groupString = "org.hnau.gradle"
 val artifactString = "plugins"
 
@@ -96,7 +97,6 @@ gradlePlugin {
     }
 }
 
-val gitUrl = "https://github.com/hnau256/gradle-config-plugins"
 
 extensions.configure<MavenPublishBaseExtension> {
     publishToMavenCentral()
@@ -108,11 +108,32 @@ extensions.configure<MavenPublishBaseExtension> {
         ),
     )
 
+    project.extensions.extraProperties["mavenCentralUsername"] =
+        project.providers.gradleProperty("mavenCentralUsername").orNull
+
+    project.extensions.extraProperties["mavenCentralPassword"] =
+        project.providers.gradleProperty("mavenCentralPassword").orNull
+
+    project.extensions.configure<SigningExtension> {
+        val keyId = project.providers.gradleProperty("signing.keyId").orNull
+        val password = project.providers.gradleProperty("signing.password").orNull
+        val secretKey = project.providers.gradleProperty("signing.secretKey").orNull
+        if (secretKey != null && password != null) {
+            useInMemoryPgpKeys(
+                /* defaultKeyId = */ keyId,
+                /* defaultSecretKey = */ secretKey,
+                /* defaultPassword = */ password,
+            )
+        }
+    }
+
     coordinates(
         groupId = groupString,
         artifactId = artifactString,
         version = versionString,
     )
+
+    val gitUrl = "https://github.com/hnau256/gradle-config-plugins"
 
     pom {
         name.set("Hnau Gradle Plugins")

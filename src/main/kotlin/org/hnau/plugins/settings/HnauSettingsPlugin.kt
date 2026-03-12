@@ -93,19 +93,18 @@ class HnauSettingsPlugin : Plugin<Settings> {
                     )
                 }
 
-            val libraries =
-                listOf(
-                    Versions.HnauCommons.appModel,
-                    Versions.HnauCommons.appProjector,
-                    Versions.Kotlinx.immutable,
-                )
+            val libraries = buildList {
+                addAll(Versions.HnauCommons.forBom)
+                addAll(Versions.Kotlinx.forBom)
+                addAll(Versions.Standalone.forBom)
+            }
 
-            val usedVersions =
-                listOf(
-                    plugins,
-                    libraries,
-                ).flatten()
-                    .map { it.withoutAlias.version }
+            val usedVersions = listOf(
+                plugins,
+                libraries,
+            )
+                .flatten()
+                .map { it.withoutAlias.version }
 
             usedVersions.forEach { version ->
                 catalog.version(

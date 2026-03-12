@@ -4,6 +4,7 @@ import org.hnau.plugins.utils.versions.Aliased
 import org.hnau.plugins.utils.versions.ComposeDependencyTypeValues
 import org.hnau.plugins.utils.versions.GroupId
 import org.hnau.plugins.utils.versions.AnnotationWithProcessor
+import org.hnau.plugins.utils.versions.ArtifactId
 import org.hnau.plugins.utils.versions.LibraryId
 import org.hnau.plugins.utils.versions.PluginId
 import org.hnau.plugins.utils.versions.Version
@@ -51,7 +52,7 @@ internal object Versions {
             PluginId("com.google.gms.google-services") withVersion Version.GoogleServicesPlugin withAlias "googleServices"
 
         val ksp =
-            PluginId("com.google.devtools.ksp") withVersion Version.KspPlugin withAlias "ksp"
+            PluginId("com.google.devtools.ksp") withVersion Version.Ksp withAlias "ksp"
 
         val composeMultiplatform =
             PluginId("org.jetbrains.compose") withVersion Version.ComposeMultiplatform withAlias "composeMultiplatform"
@@ -76,9 +77,12 @@ internal object Versions {
 
         val kotlin = group withArtifact "kotlin" withVersion Version.HnauCommons
 
-        val appModel = group withArtifact "app-model" withVersion Version.HnauCommons withAlias "commons-app-model"
-
-        val appProjector = group withArtifact "app-projector" withVersion Version.HnauCommons withAlias "commons-app-projector"
+        val forBom: List<Aliased<Versioned<LibraryId>>> = listOf(
+            ArtifactId("app-model") withVersion Version.HnauCommons withAlias "commons-app-model",
+            ArtifactId("app-projector") withVersion Version.HnauCommons withAlias "commons-app-projector"
+        ).map { aliasedVersionedArtifactId ->
+            aliasedVersionedArtifactId.withGroup(group)
+        }
 
         val gen: List<AnnotationWithProcessor<Versioned<LibraryId>>> = listOf(
             "pipe", "loggable", "sealup", "enumvalues",
@@ -99,8 +103,33 @@ internal object Versions {
             group withArtifact "kotlinx-serialization-$suffix" withVersion Version.KotlinxSerialization
         }
 
-        val immutable: Aliased<Versioned<LibraryId>> =
-            group withArtifact "kotlinx-collections-immutable" withVersion Version.KotlinImmutable withAlias "kotlin-immutable"
+        val forBom: List<Aliased<Versioned<LibraryId>>> = listOf(
+            ArtifactId("kotlinx-collections-immutable") withVersion Version.KotlinImmutable withAlias "kotlinx-immutable",
+            ArtifactId("atomicfu") withVersion Version.KotlinxAtomicFu withAlias "kotlinx-atomicfu",
+            ArtifactId("kotlinx-io-core") withVersion Version.KotlinxIO withAlias "kotlinx-io",
+        ).map { aliasedVersionedArtifactId: Aliased<Versioned<ArtifactId>> ->
+            aliasedVersionedArtifactId.withGroup(group)
+        }
+
+        val unconditioned: List<Versioned<LibraryId>> = listOf(
+            ArtifactId("kotlinx-coroutines-core") withVersion Version.KotlinxCoroutines,
+            ArtifactId("kotlinx-datetime") withVersion Version.KotlinxDateTime,
+        ).map { versionedArtifactId: Versioned<ArtifactId> ->
+            versionedArtifactId.withGroup(group)
+        }
+    }
+
+    object Arrow {
+
+        private fun buildArrowDependency(
+            suffix: String,
+        ): Versioned<LibraryId> = "io.arrow-kt" withArtifact "arrow-$suffix" withVersion Version.Arrow
+
+        val unconditioned: List<Versioned<LibraryId>> =
+            listOf("core", "core-serialization", "fx-coroutines").map(::buildArrowDependency)
+
+        val opticsProcessor: Versioned<LibraryId> =
+            buildArrowDependency("optics")
     }
 
     val composeMultiplatform: ComposeDependencyTypeValues<Versioned<LibraryId>> = ComposeDependencyTypeValues(
@@ -112,22 +141,53 @@ internal object Versions {
         iconsExtended = "org.jetbrains.compose.material" withArtifact "material-icons-extended" withVersion Version.CommposeMultiplatformIcons,
     )
 
-    object Jetpack {
+    object Android {
 
-        val compose: ComposeDependencyTypeValues<Versioned<LibraryId>> = ComposeDependencyTypeValues(
-            runtime = "androidx.compose.runtime" withArtifact "runtime" withVersion Version.JetpackCompose,
-            foundation = "androidx.compose.foundation" withArtifact "foundation" withVersion Version.JetpackCompose,
-            material3 = "androidx.compose.material3" withArtifact "material3" withVersion Version.JetpackComposeMaterial3,
-            ui = "androidx.compose.ui" withArtifact "ui" withVersion Version.JetpackCompose,
-            iconsCore = "androidx.compose.material" withArtifact "material-icons-core" withVersion Version.JetpackCompose,
-            iconsExtended = "androidx.compose.material" withArtifact "material-icons-extended" withVersion Version.JetpackCompose,
+        val unconditioned: List<Versioned<LibraryId>> = listOf(
+            "androidx.appcompat" withArtifact "appcompat" withVersion Version.AndroidAppCompat,
         )
 
-
-        val activity: Versioned<LibraryId> =
-            "androidx.activity" withArtifact "activity-compose" withVersion Version.ActivityCompose
-
-        val viewmodel: Versioned<LibraryId> =
-            "androidx.lifecycle" withArtifact "lifecycle-viewmodel-compose" withVersion Version.LifecycleViewmodelCompose
+        val unconditionedCompose: List<Versioned<LibraryId>> = listOf(
+            "androidx.lifecycle" withArtifact "lifecycle-viewmodel-compose" withVersion Version.LifecycleViewmodelCompose,
+        )
     }
+
+    val jetpackCompose: ComposeDependencyTypeValues<Versioned<LibraryId>> = ComposeDependencyTypeValues(
+        runtime = "androidx.compose.runtime" withArtifact "runtime" withVersion Version.JetpackCompose,
+        foundation = "androidx.compose.foundation" withArtifact "foundation" withVersion Version.JetpackCompose,
+        material3 = "androidx.compose.material3" withArtifact "material3" withVersion Version.JetpackComposeMaterial3,
+        ui = "androidx.compose.ui" withArtifact "ui" withVersion Version.JetpackCompose,
+        iconsCore = "androidx.compose.material" withArtifact "material-icons-core" withVersion Version.JetpackCompose,
+        iconsExtended = "androidx.compose.material" withArtifact "material-icons-extended" withVersion Version.JetpackCompose,
+    )
+
+    object Standalone {
+
+        private val kotlinpoetGroup = GroupId("com.squareup")
+
+        val forBom: List<Aliased<Versioned<LibraryId>>> = listOf(
+            kotlinpoetGroup withArtifact "kotlinpoet" withVersion Version.Kotlinpoet withAlias "kotlinpoet-core",
+            kotlinpoetGroup withArtifact "kotlinpoet-ksp" withVersion Version.Kotlinpoet withAlias "kotlinpoet-ksp",
+            "com.google.devtools.ksp" withArtifact "symbol-processing-api" withVersion Version.Ksp withAlias "ksp-api",
+        )
+
+        val unconditioned: List<Versioned<LibraryId>> = listOf(
+            "co.touchlab" withArtifact "kermit" withVersion Version.Kermit
+        )
+    }
+}
+
+private fun Aliased<Versioned<ArtifactId>>.withGroup(
+    group: GroupId,
+): Aliased<Versioned<LibraryId>> {
+    val (versionedArtifactId, alias) = this
+    val (artifactId, version) = versionedArtifactId
+    return group withArtifact artifactId withVersion version withAlias alias
+}
+
+private fun Versioned<ArtifactId>.withGroup(
+    group: GroupId,
+): Versioned<LibraryId> {
+    val (artifactId, version) = this
+    return group withArtifact artifactId withVersion version
 }
