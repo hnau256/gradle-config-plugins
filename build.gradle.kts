@@ -27,14 +27,18 @@ dependencies {
     implementation(libs.ksp)
     implementation(libs.compose)
     implementation(libs.google.services)
-    implementation(libs.vanniktech)
     implementation(libs.dokka)
+    implementation(libs.vanniktech)
+
+    // okhttp3 is a runtime dependency of vanniktech but needs to be on the plugin classpath
+    // because vanniktech is applied programmatically (not via pluginManagement), so its runtime
+    // transitive deps (okhttp-jvm, retrofit, etc.) don't get resolved into the plugin classloader
+    implementation(libs.okhttp)
 }
 
-val jvmVersion =
-    libs.versions.jvm
-        .get()
-        .toInt()
+val jvmVersion = libs.versions.jvm
+    .get()
+    .toInt()
 
 java {
     toolchain {
@@ -50,9 +54,8 @@ kotlin {
     }
 }
 
-
 // Bump this together with `Versions.plugins.hnau` in Versions.kt
-val versionString = "1.2.4"
+val versionString = "1.2.5"
 val groupString = "org.hnau.gradle"
 val artifactString = "plugins"
 
@@ -63,12 +66,13 @@ version = versionString
 gradlePlugin {
     plugins {
         val prefix = "org.hnau.plugin"
-        
+
         create("HnauSettings") {
             id = "$prefix.settings"
             implementationClass = "org.hnau.plugins.settings.HnauSettingsPlugin"
             displayName = "Hnau Settings Plugin"
-            description = "Centralized settings: version catalog, pluginManagement, auto-include modules, allModules defaults"
+            description =
+                "Centralized settings: version catalog, pluginManagement, auto-include modules, allModules defaults"
         }
         create("HnauJvm") {
             id = "$prefix.jvm"
@@ -97,7 +101,6 @@ gradlePlugin {
     }
 }
 
-
 extensions.configure<MavenPublishBaseExtension> {
     publishToMavenCentral()
 
@@ -120,9 +123,12 @@ extensions.configure<MavenPublishBaseExtension> {
         val secretKey = project.providers.gradleProperty("signing.secretKey").orNull
         if (secretKey != null && password != null) {
             useInMemoryPgpKeys(
-                /* defaultKeyId = */ keyId,
-                /* defaultSecretKey = */ secretKey,
-                /* defaultPassword = */ password,
+                // defaultKeyId =
+                keyId,
+                // defaultSecretKey =
+                secretKey,
+                // defaultPassword =
+                password,
             )
         }
     }

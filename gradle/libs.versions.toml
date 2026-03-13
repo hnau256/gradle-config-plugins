@@ -7,6 +7,8 @@ agp = "9.1.0"
 jvm = "17"
 # Bump this together with `Versions.vanniktech` in Versions.kt
 vanniktech = "0.36.0"
+# Bump this together with central-portal's okhttp-jvm dependency
+okhttpJvm = "5.1.0"
 # Bump this together with `Versions.dokka` in Versions.kt
 dokka = "2.1.0"
 # Bump this together with `Versions.ksp` in Versions.kt
@@ -26,6 +28,7 @@ ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", vers
 compose = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "composeMultiplatform" }
 google-services = { module = "com.google.gms:google-services", version.ref = "googleServices" }
 vanniktech = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "vanniktech" }
+okhttp = { module = "com.squareup.okhttp3:okhttp-jvm", version.ref = "okhttpJvm" }
 dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
 
 [plugins]
