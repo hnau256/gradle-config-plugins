@@ -13,6 +13,7 @@ import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.configure
 import org.gradle.plugins.signing.SigningExtension
+import org.hnau.plugins.TaskNames
 import org.hnau.plugins.Versions
 import org.hnau.plugins.utils.SharedConfig
 import org.hnau.plugins.utils.versions.ComposeDependencyType
@@ -347,9 +348,13 @@ private fun configureKspIdNeed(
             }
 
             project.tasks.withType(KotlinCompile::class.java).configureEach { task ->
-                if (task.name != "kspCommonMainKotlinMetadata") {
-                    task.dependsOn("kspCommonMainKotlinMetadata")
+                if (task.name == TaskNames.dokkaGeneratePublicationHtml) {
+                    return@configureEach
                 }
+                if (task.name == TaskNames.kspCommonMainKotlinMetadata) {
+                    return@configureEach
+                }
+                task.dependsOn(TaskNames.kspCommonMainKotlinMetadata)
             }
         }
     }
@@ -388,7 +393,7 @@ private fun configurePublishing(
     project.extensions.configure(MavenPublishBaseExtension::class.java) { publishing ->
         publishing.publishToMavenCentral()
 
-        val dokkaJavadocJar = JavadocJar.Dokka("dokkaGeneratePublicationHtml")
+        val dokkaJavadocJar = JavadocJar.Dokka(TaskNames.dokkaGeneratePublicationHtml)
         publishing.configure(
             when (projectType) {
                 ProjectType.Jvm -> KotlinJvm(dokkaJavadocJar)
