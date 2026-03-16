@@ -11,6 +11,7 @@ import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.api.tasks.AbstractCopyTask
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.configure
 import org.gradle.plugins.signing.SigningExtension
@@ -24,7 +25,9 @@ import org.jetbrains.compose.ComposePlugin
 import org.jetbrains.compose.resources.ResourcesExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun configureProject(
@@ -348,10 +351,13 @@ private fun configureKsp(
                 sourceSet.kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
             }
 
-            project.tasks.withType(KotlinCompile::class.java).configureEach { task ->
+            project.tasks.withType(KotlinCompilationTask::class.java).configureEach { task ->
                 if (task.name == TaskNames.kspCommonMainKotlinMetadata) {
                     return@configureEach
                 }
+                task.dependsOn(TaskNames.kspCommonMainKotlinMetadata)
+            }
+            project.tasks.withType(AbstractCopyTask::class.java).configureEach { task ->
                 task.dependsOn(TaskNames.kspCommonMainKotlinMetadata)
             }
         }
