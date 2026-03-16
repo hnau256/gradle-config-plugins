@@ -2,6 +2,7 @@ package org.hnau.plugins.project
 
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryExtension
+import com.android.tools.r8.internal.wg0
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
 import com.vanniktech.maven.publish.KotlinMultiplatform
@@ -276,10 +277,13 @@ private fun configureCommon(
         projectType = projectType,
     )
 
-    configureKspIdNeed(
-        project = project,
-        projectType = projectType,
-    )
+    val hasKsp = project.hasPlugin(Versions.Plugins.ksp.withoutAlias.withoutVersion)
+    if (hasKsp) {
+        configureKsp(
+            project = project,
+            projectType = projectType,
+        )
+    }
 
     config.publish?.let { publish ->
         configurePublishing(
@@ -287,6 +291,7 @@ private fun configureCommon(
             publish = publish,
             projectConfig = config,
             projectType = projectType,
+            hasKsp = hasKsp,
         )
     }
 }
@@ -310,14 +315,10 @@ private fun configureSerializationIfNeed(
         }
 }
 
-private fun configureKspIdNeed(
+private fun configureKsp(
     project: Project,
     projectType: ProjectType,
 ) {
-    if (!project.hasPlugin(Versions.Plugins.ksp.withoutAlias.withoutVersion)) {
-        return
-    }
-
     fun addProcessor(
         dependency: Versioned<LibraryId>,
     ) {
@@ -348,9 +349,6 @@ private fun configureKspIdNeed(
             }
 
             project.tasks.withType(KotlinCompile::class.java).configureEach { task ->
-                if (task.name == TaskNames.dokkaGeneratePublicationHtml) {
-                    return@configureEach
-                }
                 if (task.name == TaskNames.kspCommonMainKotlinMetadata) {
                     return@configureEach
                 }
@@ -365,11 +363,21 @@ private fun configurePublishing(
     projectType: ProjectType,
     publish: ProjectConfig.Publish,
     projectConfig: ProjectConfig,
+    hasKsp: Boolean,
 ) {
     project.applyPlugin(Versions.Plugins.vanniktech.withoutAlias.withoutVersion)
     project.applyPlugin(Versions.Plugins.dokka.withoutAlias.withoutVersion)
     project.applyPlugin(Versions.Plugins.signing)
 
+    val depentDokkaByKsp = when (projectType) {
+        ProjectType.Jvm -> false
+        is ProjectType.Kmp -> hasKsp
+    }
+    if (depentDokkaByKsp) {
+        project.tasks.named(TaskNames.dokkaGeneratePublicationHtml).configure  { task ->
+            task.dependsOn(TaskNames.kspCommonMainKotlinMetadata)
+        }
+    }
 
     project.extensions.extraProperties["mavenCentralUsername"] =
         project.providers.gradleProperty("mavenCentralUsername").orNull
