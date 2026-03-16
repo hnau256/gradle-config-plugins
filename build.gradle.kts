@@ -55,7 +55,7 @@ kotlin {
 }
 
 // Bump this together with `Versions.plugins.hnau` in Versions.kt
-val versionString = "1.2.7"
+val versionString = "1.2.8"
 val groupString = "org.hnau.gradle"
 val artifactString = "plugins"
 

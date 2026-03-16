@@ -149,6 +149,7 @@ internal object Versions {
 
         val unconditionedCompose: List<Versioned<LibraryId>> = listOf(
             "androidx.lifecycle" withArtifact "lifecycle-viewmodel-compose" withVersion Version.LifecycleViewmodelCompose,
+            "androidx.activity" withArtifact "activity-compose" withVersion Version.ActivityCompose,
         )
     }
 
