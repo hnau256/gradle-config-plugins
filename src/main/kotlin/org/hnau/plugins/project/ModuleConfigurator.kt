@@ -2,7 +2,6 @@ package org.hnau.plugins.project
 
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryExtension
-import com.android.tools.r8.internal.wg0
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
 import com.vanniktech.maven.publish.KotlinMultiplatform
@@ -22,10 +21,8 @@ import org.hnau.plugins.utils.versions.ComposeDependencyType
 import org.hnau.plugins.utils.versions.LibraryId
 import org.hnau.plugins.utils.versions.Versioned
 import org.jetbrains.compose.ComposePlugin
-import org.jetbrains.compose.resources.ResourcesExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -195,12 +192,6 @@ private fun configureKmp(
                 "${DesktopTargetName}MainImplementation",
                 ComposePlugin.Dependencies(project).desktop.currentOs,
             )
-
-            (project.extensions.findByName("compose") as ExtensionAware)
-                .extensions
-                .configure(ResourcesExtension::class.java) { resources ->
-                    resources.packageOfResClass = "${config.androidNamespace}.resources"
-                }
 
             ComposeDependencyType
                 .entries

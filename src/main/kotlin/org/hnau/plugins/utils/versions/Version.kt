@@ -7,7 +7,7 @@ enum class Version(
     AndroidGradlePlugin("9.1.0"),
     ComposeMultiplatform("1.10.2"),
     ComposeMultiplatformMaterial3("1.10.0-alpha05"),
-    HnauPlugins("1.2.9"),
+    HnauPlugins("1.2.10"),
     HnauCommons("1.4.0"),
     KotlinxSerialization("1.10.0"),
     CommposeMultiplatformIcons("1.7.3"),
