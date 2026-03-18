@@ -2,8 +2,6 @@ package org.hnau.plugins.project
 
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryExtension
-import com.android.builder.model.Dependencies
-import com.android.tools.r8.internal.pr
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
 import com.vanniktech.maven.publish.KotlinMultiplatform
@@ -135,6 +133,7 @@ private fun configureJvm(
     project.tasks.withType(KotlinCompile::class.java).configureEach { task ->
         task.compilerOptions {
             jvmTarget.set(Versions.jvmTarget)
+            freeCompilerArgs.addAll(kotlinFreeCompilerArgs)
         }
     }
 
@@ -182,6 +181,10 @@ private fun configureKmp(
         projectType = projectType,
         addCompose = addCompose,
     )
+
+    projectType.kmpExtension.compilerOptions {
+        freeCompilerArgs.addAll(kotlinFreeCompilerArgs)
+    }
 
     (projectType.kmpExtension as ExtensionAware)
         .extensions
@@ -447,3 +450,7 @@ private fun configurePublishing(
 }
 
 private const val DesktopTargetName = "desktop"
+
+private val kotlinFreeCompilerArgs: List<String> = listOf(
+    "-opt-in=kotlin.time.ExperimentalTime",
+)
