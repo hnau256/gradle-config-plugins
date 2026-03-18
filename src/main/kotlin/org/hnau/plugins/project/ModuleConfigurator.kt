@@ -2,6 +2,8 @@ package org.hnau.plugins.project
 
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryExtension
+import com.android.builder.model.Dependencies
+import com.android.tools.r8.internal.pr
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
 import com.vanniktech.maven.publish.KotlinMultiplatform
@@ -18,6 +20,7 @@ import org.hnau.plugins.TaskNames
 import org.hnau.plugins.Versions
 import org.hnau.plugins.utils.SharedConfig
 import org.hnau.plugins.utils.versions.ComposeDependencyType
+import org.hnau.plugins.utils.versions.ComposeDependencyTypeValues
 import org.hnau.plugins.utils.versions.LibraryId
 import org.hnau.plugins.utils.versions.Versioned
 import org.jetbrains.compose.ComposePlugin
@@ -94,16 +97,10 @@ private fun configureJvm(
                 task.options.release.set(Versions.jvmTargetInt)
             }
 
-            ComposeDependencyType
-                .entries
-                .map(Versions.jetpackCompose::get)
-                .forEach { jetpackComposeDependency ->
-                    project
-                        .addDependency(
-                            type = projectType,
-                            dependency = jetpackComposeDependency,
-                        )
-                }
+            project.addComposeDependencies(
+                dependencies = Versions.jetpackCompose,
+                projectType = projectType,
+            )
         }
 
         true -> {
@@ -142,6 +139,21 @@ private fun configureJvm(
     }
 
     return projectType
+}
+
+private fun Project.addComposeDependencies(
+    dependencies: ComposeDependencyTypeValues<Versioned<LibraryId>?>,
+    projectType: ProjectType,
+) {
+    ComposeDependencyType
+        .entries
+        .mapNotNull(dependencies::get)
+        .forEach { jetpackComposeDependency ->
+            addDependency(
+                type = projectType,
+                dependency = jetpackComposeDependency,
+            )
+        }
 }
 
 private fun configureKmp(
@@ -193,16 +205,10 @@ private fun configureKmp(
                 ComposePlugin.Dependencies(project).desktop.currentOs,
             )
 
-            ComposeDependencyType
-                .entries
-                .map(Versions.composeMultiplatform::get)
-                .forEach { composeMultiplatformDependency ->
-                    project
-                        .addDependency(
-                            type = projectType,
-                            dependency = composeMultiplatformDependency,
-                        )
-                }
+            project.addComposeDependencies(
+                dependencies = Versions.composeMultiplatform,
+                projectType = projectType,
+            )
         }
 
         false -> {
@@ -371,7 +377,7 @@ private fun configurePublishing(
         is ProjectType.Kmp -> hasKsp
     }
     if (depentDokkaByKsp) {
-        project.tasks.named(TaskNames.dokkaGeneratePublicationHtml).configure  { task ->
+        project.tasks.named(TaskNames.dokkaGeneratePublicationHtml).configure { task ->
             task.dependsOn(TaskNames.kspCommonMainKotlinMetadata)
         }
     }

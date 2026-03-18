@@ -132,9 +132,10 @@ internal object Versions {
             buildArrowDependency("optics")
     }
 
-    val composeMultiplatform: ComposeDependencyTypeValues<Versioned<LibraryId>> = ComposeDependencyTypeValues(
+    val composeMultiplatform: ComposeDependencyTypeValues<Versioned<LibraryId>?> = ComposeDependencyTypeValues(
         runtime = "org.jetbrains.compose.runtime" withArtifact "runtime" withVersion Version.ComposeMultiplatform,
         foundation = "org.jetbrains.compose.foundation" withArtifact "foundation" withVersion Version.ComposeMultiplatform,
+        foundationLayout = null,
         ui = "org.jetbrains.compose.ui" withArtifact "ui" withVersion Version.ComposeMultiplatform,
         material3 = "org.jetbrains.compose.material3" withArtifact "material3" withVersion Version.ComposeMultiplatformMaterial3,
         iconsCore = "org.jetbrains.compose.material" withArtifact "material-icons-core" withVersion Version.CommposeMultiplatformIcons,
@@ -153,9 +154,10 @@ internal object Versions {
         )
     }
 
-    val jetpackCompose: ComposeDependencyTypeValues<Versioned<LibraryId>> = ComposeDependencyTypeValues(
+    val jetpackCompose: ComposeDependencyTypeValues<Versioned<LibraryId>?> = ComposeDependencyTypeValues(
         runtime = "androidx.compose.runtime" withArtifact "runtime" withVersion Version.JetpackCompose,
         foundation = "androidx.compose.foundation" withArtifact "foundation" withVersion Version.JetpackCompose,
+        foundationLayout = "androidx.compose.foundation" withArtifact "foundation-layout" withVersion Version.JetpackCompose,
         material3 = "androidx.compose.material3" withArtifact "material3" withVersion Version.JetpackComposeMaterial3,
         ui = "androidx.compose.ui" withArtifact "ui" withVersion Version.JetpackCompose,
         iconsCore = "androidx.compose.material" withArtifact "material-icons-core" withVersion Version.JetpackCompose,
