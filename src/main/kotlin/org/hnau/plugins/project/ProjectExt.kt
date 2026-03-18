@@ -1,7 +1,6 @@
 package org.hnau.plugins.project
 
 import org.gradle.api.Project
-import org.gradle.internal.serialize.codecs.core.NodeOwner
 import org.gradle.kotlin.dsl.dependencies
 import org.hnau.plugins.utils.versions.LibraryId
 import org.hnau.plugins.utils.versions.PluginId
@@ -25,6 +24,22 @@ fun Project.addDependency(
             .commonMainSourceSet
             .configure { commonMainSourceSet ->
                 commonMainSourceSet.dependencies {
+                    implementation(dependency.asDependency)
+                }
+            }
+    }
+}
+
+fun Project.addTestDependency(
+    type: ProjectType,
+    dependency: Versioned<LibraryId>,
+) {
+    when (type) {
+        ProjectType.Jvm -> addDependency("testImplementation", dependency)
+        is ProjectType.Kmp -> type
+            .commonTestSourceSet
+            .configure { commonTestSourceSet ->
+                commonTestSourceSet.dependencies {
                     implementation(dependency.asDependency)
                 }
             }

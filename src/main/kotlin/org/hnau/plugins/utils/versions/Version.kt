@@ -7,7 +7,7 @@ enum class Version(
     AndroidGradlePlugin("9.1.0"),
     ComposeMultiplatform("1.10.2"),
     ComposeMultiplatformMaterial3("1.10.0-alpha05"),
-    HnauPlugins("1.2.13"),
+    HnauPlugins("1.2.14"),
     HnauCommons("1.4.3"),
     KotlinxSerialization("1.10.0"),
     CommposeMultiplatformIcons("1.7.3"),
@@ -30,7 +30,8 @@ enum class Version(
     KotlinxAtomicFu("0.31.0"),
     KotlinxIO("0.9.0"),
     Kermit("2.0.8"),
-    Kotlinpoet("2.2.0");
+    Kotlinpoet("2.2.0"),
+    ;
 
     val alias: Alias = name
         .replaceFirstChar(Char::lowercase)

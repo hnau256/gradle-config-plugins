@@ -162,6 +162,8 @@ internal object Versions {
         iconsExtended = "androidx.compose.material" withArtifact "material-icons-extended" withVersion Version.JetpackComposeIcons,
     )
 
+    val kotlinTest: Versioned<LibraryId> = "org.jetbrains.kotlin" withArtifact "kotlin-test" withVersion Version.Kotlin
+
     object Standalone {
 
         private val kotlinpoetGroup = GroupId("com.squareup")

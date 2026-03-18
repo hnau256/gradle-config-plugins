@@ -275,6 +275,11 @@ private fun configureCommon(
         )
     }
 
+    project.addTestDependency(
+        type = projectType,
+        dependency = Versions.kotlinTest,
+    )
+
     configureSerializationIfNeed(
         project = project,
         projectType = projectType,
