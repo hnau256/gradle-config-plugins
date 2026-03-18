@@ -96,11 +96,6 @@ private fun configureJvm(
             project.tasks.withType(JavaCompile::class.java).configureEach { task ->
                 task.options.release.set(Versions.jvmTargetInt)
             }
-
-            project.addComposeDependencies(
-                dependencies = Versions.jetpackCompose,
-                projectType = projectType,
-            )
         }
 
         true -> {
@@ -129,6 +124,11 @@ private fun configureJvm(
                 projectType = projectType,
                 addCompose = true,
             )
+
+            project.addComposeDependencies(
+                dependencies = Versions.jetpackCompose,
+                projectType = projectType,
+            )
         }
     }
 
@@ -142,12 +142,12 @@ private fun configureJvm(
 }
 
 private fun Project.addComposeDependencies(
-    dependencies: ComposeDependencyTypeValues<Versioned<LibraryId>?>,
+    dependencies: ComposeDependencyTypeValues<Versioned<LibraryId>>,
     projectType: ProjectType,
 ) {
     ComposeDependencyType
         .entries
-        .mapNotNull(dependencies::get)
+        .map(dependencies::get)
         .forEach { jetpackComposeDependency ->
             addDependency(
                 type = projectType,
