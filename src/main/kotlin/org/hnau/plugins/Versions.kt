@@ -104,7 +104,6 @@ internal object Versions {
         }
 
         val forBom: List<Aliased<Versioned<LibraryId>>> = listOf(
-            ArtifactId("kotlinx-collections-immutable") withVersion Version.KotlinImmutable withAlias "kotlinx-immutable",
             ArtifactId("atomicfu") withVersion Version.KotlinxAtomicFu withAlias "kotlinx-atomicfu",
             ArtifactId("kotlinx-io-core") withVersion Version.KotlinxIO withAlias "kotlinx-io",
         ).map { aliasedVersionedArtifactId: Aliased<Versioned<ArtifactId>> ->
