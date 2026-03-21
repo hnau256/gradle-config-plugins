@@ -22,7 +22,6 @@ enum class Version(
     Ksp("2.3.6"),
     DokkaPlugin("2.1.0"),
     VanniktechPlugin("0.36.0"),
-    KotlinImmutable("0.4.0"),
     Arrow("2.2.2"),
 
     KotlinxCoroutines("1.10.2"),
