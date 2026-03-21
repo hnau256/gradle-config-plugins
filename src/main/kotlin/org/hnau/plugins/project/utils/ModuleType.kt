@@ -1,4 +1,4 @@
-package org.hnau.plugins.project
+package org.hnau.plugins.project.utils
 
 enum class ModuleType {
     JVM,

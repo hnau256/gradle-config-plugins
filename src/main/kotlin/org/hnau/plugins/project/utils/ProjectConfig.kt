@@ -1,10 +1,9 @@
-package org.hnau.plugins.project
+package org.hnau.plugins.project.utils
 
 import org.gradle.api.Project
 import org.hnau.plugins.utils.SharedConfig
 import org.hnau.plugins.utils.versions.ArtifactId
 import org.hnau.plugins.utils.versions.GroupId
-import org.hnau.plugins.utils.versions.LibraryId
 
 data class ProjectConfig(
     val groupId: GroupId,
@@ -23,7 +22,7 @@ data class ProjectConfig(
     )
 }
 
-fun SharedConfig.toProjectConfig(
+internal fun SharedConfig.toProjectConfig(
     project: Project,
 ): ProjectConfig {
 
@@ -50,7 +49,7 @@ fun SharedConfig.toProjectConfig(
     )
 }
 
-val ProjectConfig.androidNamespace: String
+internal val ProjectConfig.androidNamespace: String
     get() = listOf(
         groupId.groupId,
         artifactId.artifactId.replace('-', '.')
